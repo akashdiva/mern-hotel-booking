@@ -5,13 +5,18 @@ import Homepage from "./pages/Homepage";
 import HotelDetails from "./pages/HotelDetails";
 import BookingPage from "./pages/BookingPage";
 import ContactPage from "./pages/ContactPage";
+import ScrollToTop from "./components/ScrollToTop";
 import Rooms from "./pages/Rooms";
 import Footer from "./components/Footer";
+
 export const backendUrl="http://localhost:4000"
 
 const App = () => {
   return (
     <div>
+
+      <ScrollToTop />  
+
       <Navbar />
 
       <Routes>
@@ -23,8 +28,10 @@ const App = () => {
       </Routes>
 
       <Footer />
+
     </div>
   );
 };
+
 
 export default App;

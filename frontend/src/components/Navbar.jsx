@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 import logo from "../assets/Ragu_Residency-icon.jpeg";
 
 const Navbar = () => {
@@ -86,12 +86,13 @@ const Navbar = () => {
 </ul>
 
           {/* Desktop Call Button */}
-          <a
-            href="tel:+918667837244"
-            className="hidden md:block bg-[#E17100] hover:bg-[#c96300] text-white px-5 py-2 rounded-lg font-medium transition"
-          >
-            📞 +91 86678 37244
-          </a>
+        <a
+  href="tel:+918667837244"
+  className="hidden md:flex items-center gap-2 bg-[#E17100] hover:bg-[#c96300] text-white px-5 py-2 rounded-lg font-medium transition"
+>
+  <Phone size={18} className="text-white" />
+  +91 86678 37244
+</a>
 
           {/* Mobile Menu Button */}
           <button

@@ -1,6 +1,7 @@
 import React from "react";
 import bgImage from "../assets/Ragu_Residency.png";
 import { Link } from "react-router-dom";
+import { Menu, X, Phone, Star } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -27,12 +28,17 @@ const Hero = () => {
           Your Comfortable Stay in Tiruvallur
         </p>
 
-        <div className="flex items-center gap-2 mb-6 text-yellow-400 text-lg">
-          ⭐⭐⭐⭐☆
-          <span className="text-white text-base ml-2">
-            4.0 (290 reviews)
-          </span>
-        </div>
+       <div className="flex items-center gap-1 mb-6">
+  <Star className="text-yellow-400 fill-yellow-400" size={20} />
+  <Star className="text-yellow-400 fill-yellow-400" size={20} />
+  <Star className="text-yellow-400 fill-yellow-400" size={20} />
+  <Star className="text-yellow-400 fill-yellow-400" size={20} />
+  <Star className="text-gray-300" size={20} />
+
+  <span className="text-white text-base ml-2">
+    4.0 (290 reviews)
+  </span>
+</div>
 
         <div className="flex justify-center gap-4 mt-6">
           <Link
