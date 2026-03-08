@@ -9,7 +9,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import Rooms from "./pages/Rooms";
 import Footer from "./components/Footer";
 
-export const backendUrl="http://localhost:4000"
+export const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const App = () => {
   return (
