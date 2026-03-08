@@ -6,7 +6,7 @@ const AadhaarUpload = ({ onVerified, onUploadStart }) => {
 
   const [isValidating, setIsValidating] = useState(false);
   const [verified, setVerified] = useState(false);
-  const [fileName, setFileName] = useState("Upload Aadhaar Card In Landscape Image");
+  const [fileName, setFileName] = useState("Upload Aadhaar Card As Landscape Image");
 
   const isValidAadhaar = (aadhaar) => {
     return /^\d{12}$/.test(aadhaar);
@@ -125,7 +125,7 @@ const AadhaarUpload = ({ onVerified, onUploadStart }) => {
     accept="image/*"
     className="hidden"
     onChange={(e) => {
-      setFileName(e.target.files[0]?.name || " Upload Aadhaar Card In Landscape Image");
+      setFileName(e.target.files[0]?.name || " Upload Aadhaar Card As Landscape Image");
       handleUpload(e);
     }}
   />
