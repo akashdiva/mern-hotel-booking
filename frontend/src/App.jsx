@@ -10,8 +10,10 @@ import Rooms from "./pages/Rooms";
 import Footer from "./components/Footer";
 
 export const backendUrl = import.meta.env.VITE_BACKEND_URL;
+//export const backendUrl="http://localhost:4000";
 
 const App = () => {
+  console.log(import.meta.env.VITE_BACKEND_URL);
   return (
     <div>
 
