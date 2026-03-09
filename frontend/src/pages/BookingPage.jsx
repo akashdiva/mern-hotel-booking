@@ -366,10 +366,10 @@ const nights =
 
   return (
     <div className="bg-gray-100 min-h-screen py-16">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-white rounded-2xl shadow-lg p-12">
+      <div className="max-w-4xl mx-auto px-4 md:px-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12">
 
-          <h1 className="text-4xl font-bold text-center text-gray-800">
+          <h1 className="text-2xl md:text-4xl font-bold text-center text-gray-800">
             Book Your Stay
           </h1>
           <p className="text-center text-gray-500 mt-2 mb-10">
@@ -383,7 +383,7 @@ const nights =
                 Personal Information
               </h2>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
 
                 <div>
                   <label className="block mb-2 font-medium">Full Name *</label>
@@ -393,7 +393,7 @@ const nights =
                     value={formData.fullName || ""}
                     onChange={handleChange}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 outline-none"
+                   className="w-full border border-gray-300 rounded-lg px-3 py-3 focus:ring-2 focus:ring-orange-500 outline-none"
                   />
                 </div>
 
@@ -576,7 +576,7 @@ const nights =
     popperPlacement="bottom-start"
     popperClassName="z-50"
     portalId="root"
-    className="w-full border border-gray-300 rounded-lg px-24 py-4"
+   className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
   />
 </div>
 
@@ -593,7 +593,7 @@ const nights =
     popperPlacement="bottom-start"
     popperClassName="z-50"
     portalId="root"
-    className="w-full border border-gray-300 rounded-lg px-24 py-4"
+  className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
   />
 </div>
 
@@ -601,7 +601,7 @@ const nights =
             </div>
 
             {totalAmount > 0 && (
-  <div className="bg-[#f5f1e6] rounded-xl p-6 mt-6">
+  <div className="bg-[#f5f1e6] rounded-xl p-4 md:p-6 mt-6">
     <h2 className="text-xl font-semibold mb-4 text-gray-800">
       Booking Summary
     </h2>
@@ -642,7 +642,7 @@ const nights =
 {showTerms && (
   <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
 
-    <div className="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col">
+    <div className="bg-white w-[95%] md:w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col">
 
       {/* HEADER */}
       <div className="p-5 border-b">
@@ -747,17 +747,17 @@ In case of unforeseen events beyond our control (natural disasters, government r
 
     <div className="mt-20 grid  md:grid-cols-3 gap-8 items-start">
 
-  <div className="bg-white h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center">
+  <div className="bg-white min-h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center p-4">
     <h3 className="text-xl font-bold">Check-in Time</h3>
     <p className="text-gray-600">02:00 PM onwards</p>
   </div>
 
-  <div className="bg-white h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center">
+  <div className="bg-white min-h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center p-4">
     <h3 className="text-xl font-bold">Check-out Time</h3>
     <p className="text-gray-600">11:00 AM</p>
   </div>
 
-  <div className="bg-white h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center ">
+  <div className="bg-white min-h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center p-4">
     <h3 className="text-xl font-bold">Cancellation Policy</h3>
     <p className="text-gray-600">
       Free cancellation up to 24 hours before check-in

@@ -1,4 +1,6 @@
 import React from "react";
+import { FaStar, FaRegStar } from "react-icons/fa";
+
 import img1 from "../assets/img1.jpeg";
 import img2 from "../assets/img2.jpeg";
 import img3 from "../assets/img3.jpeg";
@@ -7,6 +9,7 @@ import img5 from "../assets/img5.jpeg";
 import img6 from "../assets/img6.jpeg";
 import img7 from "../assets/img7.jpeg";
 import img8 from "../assets/img8.jpeg";
+
 const defaultReviews = [
   {
     id: 1,
@@ -63,57 +66,30 @@ All the best team.`,
 ];
 
 const Reviews = () => {
+
+  const renderStars = (rating) => {
+    return (
+      <div className="flex text-yellow-500">
+        {[...Array(5)].map((_, index) =>
+          index < rating ? (
+            <FaStar key={index} />
+          ) : (
+            <FaRegStar key={index} />
+          )
+        )}
+      </div>
+    );
+  };
+
   return (
     <section className="bg-gradient-to-b from-gray-50 to-gray-100 py-24 px-6">
       <div className="max-w-6xl mx-auto">
 
-           <h2 className="text-4xl font-bold text-gray-900 mb-20 text-center text-5xl">
-  Gallery
-</h2>
-
-<div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img1} alt="gallery1" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img2} alt="gallery2" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img3} alt="gallery3" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img4} alt="gallery4" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img5} alt="gallery5" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img6} alt="gallery6" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img7} alt="gallery7" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-  <div className="overflow-hidden rounded-xl shadow-md hover:shadow-xl transition duration-300">
-    <img src={img8} alt="gallery8" className="w-full h-48 object-cover transform hover:scale-110 transition duration-500" />
-  </div>
-
-</div>
-
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-3 mt-20">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 mt-20">
             Guest Reviews
           </h2>
-
-        
 
           <p className="text-gray-600 text-lg">
             Experience shared by our valued guests on Google
@@ -121,25 +97,34 @@ const Reviews = () => {
         </div>
 
         {/* Reviews Grid */}
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2">
+
           {defaultReviews.map((review) => (
             <div
               key={review.id}
               className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition"
             >
+
               {/* Top Section */}
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h4 className="font-semibold text-gray-900">
                     {review.name}
                   </h4>
+
                   <p className="text-sm text-gray-500">
                     {review.time} on Google
                   </p>
+
+                  {/* ⭐ Stars */}
+                  <div className="mt-1">
+                    {renderStars(review.rating)}
+                  </div>
+
                 </div>
 
-                <div className="text-2xl font-bold text-gray-800">
-                  {review.rating}/5
+                <div className="text-lg font-bold text-gray-800">
+                  {review.rating}.0
                 </div>
               </div>
 
@@ -149,13 +134,28 @@ const Reviews = () => {
               </p>
 
               {/* Category Ratings */}
-              <div className="flex gap-6 text-sm text-gray-600 font-medium">
-                <span>Rooms {review.rooms}</span>
-                <span>Service {review.service}</span>
-                <span>Location {review.location}</span>
+              <div className="flex flex-wrap gap-6 text-sm text-gray-600 font-medium">
+
+                <div>
+                  <span className="block text-gray-500">Rooms</span>
+                  {renderStars(review.rooms)}
+                </div>
+
+                <div>
+                  <span className="block text-gray-500">Service</span>
+                  {renderStars(review.service)}
+                </div>
+
+                <div>
+                  <span className="block text-gray-500">Location</span>
+                  {renderStars(review.location)}
+                </div>
+
               </div>
+
             </div>
           ))}
+
         </div>
 
         {/* Google Buttons */}

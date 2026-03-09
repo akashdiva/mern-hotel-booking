@@ -55,7 +55,7 @@ const { adults, children } = getGuestCapacity();
         <img
           src={images[current]}
           alt={name}
-          className="w-full h-80 object-cover"
+       className="w-full h-56 md:h-80 object-cover"
         />
 
         {/* Price Badge */}
@@ -68,31 +68,30 @@ const { adults, children } = getGuestCapacity();
           <>
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 
-                         bg-black/50 hover:bg-black/70 
-                         text-white p-3 rounded-full 
-                         backdrop-blur-sm transition duration-300"
+             className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 
+bg-black/50 hover:bg-black/70 
+text-white p-2 md:p-3 rounded-full"
+                       
             >
               <FaChevronLeft size={18} />
             </button>
 
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 
-                         bg-black/50 hover:bg-black/70 
-                         text-white p-3 rounded-full 
-                         backdrop-blur-sm transition duration-300"
-            >
-              <FaChevronRight size={18} />
-            </button>
+           <button
+  onClick={nextSlide}
+  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 
+  bg-black/50 hover:bg-black/70 
+  text-white p-2 md:p-3 rounded-full"
+>
+  <FaChevronRight size={18} />
+</button>
           </>
         )}
       </div>
 
       {/* Details */}
-      <div className="p-6 flex flex-col flex-grow">
+      <div className="p-4 md:p-6 flex flex-col flex-grow">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 className="text-xl md:text-2xl font-bold text-gray-900">
             {name}
           </h3>
          <div className="flex items-center gap-4 text-gray-600 text-sm">
@@ -114,7 +113,7 @@ const { adults, children } = getGuestCapacity();
 </div>
         </div>
 
-       <p className="text-gray-600 mb-5 leading-relaxed text-md font-medium">
+       <p className="text-gray-600 mb-4 leading-relaxed text-sm md:text-md font-medium">
   {description
     ? description
     : "Comfortable room with essential amenities for a pleasant stay"}
@@ -122,7 +121,7 @@ const { adults, children } = getGuestCapacity();
 <div className="mt-auto">
         <h4 className="font-semibold mb-3">Amenities:</h4>
 
-        <div className="grid grid-cols-2 gap-3 text-gray-700 text-sm">
+        <div className="grid grid-cols-2 gap-2 md:gap-3 text-gray-700 text-xs md:text-sm">
          
           <div className="flex items-center gap-2">
             <FaTv className="text-[#D35400]" /> TV
@@ -164,8 +163,8 @@ const HotelList = () => {
   <div>
     {/* Header */}
     <div className="w-full bg-[#D35400] py-20 text-center text-white">
-      <h1 className="text-5xl font-bold mb-4">Our Rooms</h1>
-      <p className="text-xl">
+     <h1 className="text-3xl md:text-5xl font-bold mb-4">Our Rooms</h1>
+      <p className="text-base md:text-xl">
         Choose from our range of comfortable accommodations
       </p>
     </div>
@@ -175,7 +174,7 @@ const HotelList = () => {
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Rooms Grid */}
-        <div className="grid md:grid-cols-2 gap-10">
+    <div className="grid md:grid-cols-2 gap-6 md:gap-10">
           {rooms && rooms.length > 0 ? (
             rooms.map((room) => (
               <RoomCard key={room._id} room={room} />
@@ -190,17 +189,17 @@ const HotelList = () => {
         {/* Hotel Policies Section */}
         <div className="mt-20 grid md:grid-cols-3  gap-8">
 
-          <div className="bg-white p-20 rounded-xl shadow text-center">
+          <div className="bg-white p-8 md:p-20 rounded-xl shadow text-center">
             <h3 className="text-xl font-bold mb-3">Check-in Time</h3>
             <p className="text-gray-600">02:00 PM onwards</p>
           </div>
 
-          <div className="bg-white p-20 rounded-xl shadow text-center">
+          <div className="bg-white p-8 md:p-20 rounded-xl shadow text-center">
             <h3 className="text-xl font-bold mb-3">Check-out Time</h3>
             <p className="text-gray-600">11:00 AM</p>
           </div>
 
-          <div className="bg-white p-20 rounded-xl shadow text-center">
+          <div className="bg-white p-8 md:p-20 rounded-xl shadow text-center">
             <h3 className="text-xl font-bold mb-3">Cancellation Policy</h3>
             <p className="text-gray-600">
               Free cancellation up to 24 hours before check-in

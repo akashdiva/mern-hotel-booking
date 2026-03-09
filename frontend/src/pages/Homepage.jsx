@@ -7,6 +7,7 @@ import AboutSection from "../components/AboutSection";
 import Amenities from "../components/Amenities";
 import Reviews from "../components/Reviews";
 import BookingCTA from "../components/BookingCTA";
+import Gallery from "../components/Gallery";
 
 
 
@@ -17,8 +18,10 @@ const Homepage = () => {
       <InfoBar/>
        <AboutSection/>
        <Amenities/>
+        <Gallery/>
        <Reviews/>
        <BookingCTA/>
+      
      
      
      
