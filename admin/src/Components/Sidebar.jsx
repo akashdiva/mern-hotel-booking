@@ -30,6 +30,14 @@ const Sidebar = ({setToken}) => {
 
     </NavLink>
 
+
+      <NavLink to="/rooms" className='flex items-center gap-3 px-4 py-3 border-b-2 border-gray-200 text-gray-600 hover:bg-fuchsia-500 hover:text-white'>
+     <MdChecklistRtl  className="text-[35px] text-black"/>
+   
+    <p className=" hidden md:block text-base"> Admin Bookings</p>
+
+    </NavLink>
+
     <button onClick={()=>setToken("")} className="flex items-center gap-3 px-6 py-3 border-b-2 border-gray-200 text-gray-600 hover:bg-fuchsia-500 w-full text-left">
       <IoIosLogOut  className="text-[35px] text-black"/>
       <p  className=" hidden md:block text-base">Logout</p>

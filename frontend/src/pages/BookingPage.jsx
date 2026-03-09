@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { RoomContext } from "../context/RoomContext";
+import { backendUrl } from "../App";
 import axios from "axios";
 import Tesseract from "tesseract.js";
 import termsImage from "../assets/terms-conditions.jpeg";
@@ -128,7 +129,7 @@ useEffect(() => {
 
   const fetchBookings = async () => {
     const res = await axios.get(
-      `http://localhost:4000/api/reservations/room/${formData.roomType}`
+      `${backendUrl}/api/reservations/room/${formData.roomType}`
     );
 
 const room = rooms.find(r => r._id === formData.roomType);
@@ -302,11 +303,9 @@ const startPayment = async () => {
   try {
 
     const { data: order } = await axios.post(
-      "http://localhost:4000/api/payment/create-order",
+      `${backendUrl}/api/payment/create-order`,
       pendingReservation
     );
-
-    console.log("Order created:", order);
 
     const options = {
       key: "rzp_live_SNa0309z3lmsmB",
@@ -316,26 +315,21 @@ const startPayment = async () => {
 
       handler: async function (response) {
 
-        console.log("Razorpay success response:", response);
-
         try {
 
           const res = await axios.post(
-            "http://localhost:4000/api/payment/verify-payment",
+            `${backendUrl}/api/payment/verify-payment`,
             {
               ...response,
               bookingData: pendingReservation
             }
           );
 
-          console.log("Verify response:", res.data);
-
           alert("Payment Successful 🎉");
           setShowTerms(false);
 
         } catch (err) {
 
-          console.error("Verify payment error:", err);
           alert("Payment done but booking failed ❌");
 
         }
@@ -350,13 +344,11 @@ const startPayment = async () => {
 
   } catch (error) {
 
-    console.error("Create order error:", error);
     alert("Payment failed ❌");
 
   }
 
 };
-
 
   const totalAmount = calculateTotalAmount();
 

@@ -11,25 +11,30 @@ const razorpay = new Razorpay({
 export const createOrder = async (req, res) => {
   try {
 
+    console.log("CREATE ORDER REQUEST:", req.body);
+
     const { totalAmount } = req.body;
 
     const options = {
-      amount: totalAmount * 100, // Razorpay uses paise
+      amount: totalAmount * 100,
       currency: "INR",
       receipt: "receipt_" + Date.now(),
     };
 
     const order = await razorpay.orders.create(options);
 
+    console.log("ORDER CREATED:", order);
+
     res.json(order);
 
   } catch (error) {
+
+    console.log("CREATE ORDER ERROR:", error);
+
     res.status(500).json({ error: error.message });
   }
 };
 // ✅ VERIFY PAYMENT
-
-
 
 export const verifyPayment = async (req, res) => {
    console.log("VERIFY PAYMENT BODY:", req.body);
