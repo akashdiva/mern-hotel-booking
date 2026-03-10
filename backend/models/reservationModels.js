@@ -9,6 +9,12 @@ const reservationSchema = new mongoose.Schema(
   orderId: String,
   paymentId: String,
 
+  paymentMode: {
+    type: String,
+    enum: ["online", "cash"],
+    default: "online"
+  },
+
   paymentStatus: {
     type: String,
     enum: ["pending", "paid", "failed"],

@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { RoomContext } from "../context/RoomContext";
 import { backendUrl } from "../App";
@@ -13,7 +13,10 @@ import AadhaarUpload from "../components/AadhaarUpload";
 
 const BookingPage = () => {
   const { id } = useParams(); // get room id from URL
+  const [searchParams] = useSearchParams();
+const isAdmin = searchParams.get("admin") === "true";
 const { rooms, fetchHotelRoom } = useContext(RoomContext);
+const [paymentMode, setPaymentMode] = useState("online");
 const [showTerms, setShowTerms] = useState(false);
 const [isValidating, setIsValidating] = useState(false);
 
@@ -101,24 +104,41 @@ useEffect(() => {
 };
 
 const generateBookedDates = (reservations = [], totalRooms = 1) => {
+
   const dateCounts = {};
 
   reservations.forEach((booking) => {
-    let start = new Date(booking.checkin);
-    let end = new Date(booking.checkout);
 
-    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-      const key = d.toDateString();
+    const start = new Date(booking.checkin);
+    start.setHours(0,0,0,0);
+
+    const end = new Date(booking.checkout);
+    end.setHours(0,0,0,0);
+
+    let current = new Date(start);
+
+    while (current < end) {
+
+      const key = current.toLocaleDateString("en-CA");
+
       dateCounts[key] = (dateCounts[key] || 0) + 1;
+
+      current.setDate(current.getDate() + 1);
     }
+
   });
 
   const blocked = [];
 
   Object.keys(dateCounts).forEach((date) => {
+
     if (dateCounts[date] >= totalRooms) {
-      blocked.push(new Date(date));
+
+      const parts = date.split("-");
+      blocked.push(new Date(parts[0], parts[1]-1, parts[2]));
+
     }
+
   });
 
   return blocked;
@@ -132,7 +152,12 @@ useEffect(() => {
       `${backendUrl}/api/reservations/room/${formData.roomType}`
     );
 
+     console.log("Reservations from backend:", res.data);
+
 const room = rooms.find(r => r._id === formData.roomType);
+
+console.log("Selected room:", room);
+console.log("Total rooms:", room?.totalRooms);
 
 const blockedDates = generateBookedDates(
   Array.isArray(res.data?.reservations)
@@ -144,7 +169,7 @@ const blockedDates = generateBookedDates(
   };
 
   fetchBookings();
-}, [formData.roomType]);
+}, [formData.roomType, rooms]);
 
 const handleGuestChange = (type, action) => {
   setFormData((prev) => {
@@ -188,10 +213,10 @@ const calculateTotalAmount = () => {
   if (!formData.checkIn || !formData.checkOut || !formData.roomType)
     return 0;
 
-  const diffDays = Math.ceil(
-    (formData.checkOut - formData.checkIn) /
-    (1000 * 60 * 60 * 24)
-  );
+ const diffDays = Math.ceil(
+  (formData.checkOut.getTime() - formData.checkIn.getTime()) /
+  (1000 * 60 * 60 * 24)
+);
 
   const selectedRoom = rooms.find(
     (room) => room._id === formData.roomType
@@ -255,6 +280,12 @@ const isDateAvailable = (date) => {
   //   setIsValidating(false);
   // };
 
+  const formatDate = (date) => {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().split("T")[0];
+};
+
  const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -279,27 +310,68 @@ if (!aadhaar) {
     return;
   }
 
-  const bookingDetails = {
-    name: formData.fullName,
-    email: formData.email,
-    phone: formData.phone,
-    checkin: formData.checkIn,
-    checkout: formData.checkOut,
-    adults: formData.adults,
-    children: formData.children,
-    guests: totalGuests,
-    roomName: selectedRoom.name,
-    roomId: selectedRoom._id,
-    totalAmount,
-  aadhaar: aadhaar.name
-  };
-
+ const bookingDetails = {
+  name: formData.fullName,
+  email: formData.email,
+  phone: formData.phone,
+  checkin: formatDate(formData.checkIn),
+  checkout: formatDate(formData.checkOut),
+  adults: formData.adults,
+  children: formData.children,
+  guests: totalGuests,
+  roomName: selectedRoom.name,
+  roomId: selectedRoom._id,
+  totalAmount,
+  aadhaar: aadhaar.name,
+  paymentMode
+};
   setPendingReservation(bookingDetails);
   setShowTerms(true);
 };
 
 const startPayment = async () => {
 
+if (isAdmin && paymentMode === "cash") {
+
+  try {
+
+    const form = new FormData();
+
+    form.append("name", pendingReservation.name);
+    form.append("email", pendingReservation.email);
+    form.append("phone", pendingReservation.phone);
+    form.append("checkin", pendingReservation.checkin);
+    form.append("checkout", pendingReservation.checkout);
+    form.append("roomId", pendingReservation.roomId);
+    form.append("adults", pendingReservation.adults);
+    form.append("children", pendingReservation.children);
+    form.append("paymentMethod", "cash");
+    form.append("aadhaar", aadhaar);
+
+    await axios.post(
+      `${backendUrl}/api/reservations/create`,
+      form,
+      {
+        headers: { "Content-Type": "multipart/form-data" }
+      }
+    );
+
+    alert("Room booked successfully (Pay at Hotel) ✅");
+
+    setShowTerms(false);
+    setPendingReservation(null);
+
+    return;
+
+  } catch (error) {
+
+    console.log(error);
+    alert("Booking failed ❌");
+
+    return;
+  }
+
+}
   try {
 
     const { data: order } = await axios.post(
@@ -445,6 +517,22 @@ const nights =
             </div>
 
             <hr className="border-gray-200" />
+            {isAdmin && (
+  <div className="mt-6">
+    <label className="block mb-2 font-medium">
+      Payment Mode
+    </label>
+
+    <select
+      value={paymentMode}
+      onChange={(e) => setPaymentMode(e.target.value)}
+      className="w-full border border-gray-300 rounded-lg px-4 py-3"
+    >
+      <option value="online">Pay Online</option>
+      <option value="cash">Pay at Hotel</option>
+    </select>
+  </div>
+)}
 
             <div>
               <h2 className="text-2xl font-semibold mb-6">
@@ -586,7 +674,9 @@ const nights =
     onChange={(date) =>
       setFormData({ ...formData, checkOut: date })
     }
-    excludeDates={bookedDates}
+      excludeDates={bookedDates.filter(
+    (d) => d.toDateString() !== formData.checkIn?.toDateString()
+  )}
     minDate={formData.checkIn || new Date()}
     dateFormat="dd/MM/yyyy"
     placeholderText="Select Check-out"
@@ -719,7 +809,9 @@ In case of unforeseen events beyond our control (natural disasters, government r
           onClick={startPayment}
           className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg"
         >
-          Accept & Pay
+          {isAdmin && paymentMode === "cash"
+  ? "Confirm Booking"
+  : "Accept & Pay"}
         </button>
 
       </div>

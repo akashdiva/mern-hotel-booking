@@ -79,12 +79,17 @@ const Reservation = () => {
                   <td className="p-3">{res.email}</td>
                   <td className="p-3">{res.phone}</td>
                   <td className="p-3">{res.guests}</td>
-                  <td className="p-3">
-                    {new Date(res.checkin).toDateString()}
-                  </td>
-                  <td className="p-3">
-                    {new Date(res.checkout).toDateString()}
-                  </td>
+                 <td className="p-3">
+  {new Date(res.checkin).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  })}
+</td>
+
+<td className="p-3">
+  {new Date(res.checkout).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  })}
+</td>
                   <td className="p-3">
                     <button
                       onClick={() => handleDelete(res._id)}

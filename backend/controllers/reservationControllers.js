@@ -6,7 +6,7 @@ import hotelModel from "../models/hotelModels.js";
 const createReservation = async (req, res) => {
   
   try {
-   const {
+  const {
   name,
   email,
   phone,
@@ -15,14 +15,13 @@ const createReservation = async (req, res) => {
   adults,
   children,
   roomId,
+  paymentMethod
 } = req.body;
 
-    const aadhaarPath = req.file ? req.file.path : null;
-      const checkinDate = new Date(checkin);
-    checkinDate.setHours(0,0,0,0);
+   const aadhaarPath = req.file ? req.file.path : null;
 
-    const checkoutDate = new Date(checkout);
-    checkoutDate.setHours(0,0,0,0);
+const checkinDate = new Date(checkin + "T00:00:00");
+const checkoutDate = new Date(checkout + "T00:00:00");
 
   if (
   !name ||
@@ -53,18 +52,41 @@ if (adults > room.maxAdults || children > room.maxChildren) {
 }
 
     // Find overlapping reservations
-   const overlappingReservations = await reservationModels.find({
+ const reservations = await reservationModels.find({
   roomId,
   checkin: { $lt: checkoutDate },
   checkout: { $gt: checkinDate },
 });
 
-    // Check if rooms available
-    if (overlappingReservations.length >= room.totalRooms) {
-      return res.status(400).json({
-        message: "No rooms available for selected dates",
-      });
+let currentDate = new Date(checkinDate);
+
+while (currentDate < checkoutDate) {
+
+  let roomsBookedForDay = 0;
+
+  reservations.forEach((booking) => {
+const start = new Date(booking.checkin);
+start.setHours(0,0,0,0);
+
+const end = new Date(booking.checkout);
+end.setHours(0,0,0,0);
+
+    if (currentDate >= start && currentDate < end) {
+      roomsBookedForDay++;
     }
+  });
+
+  if (roomsBookedForDay >= room.totalRooms) {
+    return res.status(400).json({
+      message: "No rooms available for selected dates",
+    });
+  }
+
+  currentDate.setDate(currentDate.getDate() + 1);
+}
+
+    // Check if rooms available
+  
 
     const nights = Math.ceil(
       ((checkoutDate - checkinDate)) /
@@ -77,19 +99,27 @@ if (adults > room.maxAdults || children > room.maxChildren) {
 
     const totalAmount = nights * room.price;
 
-    const newReservation = await reservationModels.create({
-      name,
-      email,
-      phone,
-     checkin: checkinDate,
-checkout: checkoutDate,
-      adults,
-     children,
-      roomName: room.name,
-      roomId,
-      aadhaar: aadhaarPath,
-      totalAmount,
-    });
+    let paymentStatus = "pending";
+
+if(paymentMethod === "online"){
+  paymentStatus = "paid";
+}
+
+  const newReservation = await reservationModels.create({
+  name,
+  email,
+  phone,
+  checkin: checkinDate,
+  checkout: checkoutDate,
+  adults,
+  children,
+  roomName: room.name,
+  roomId,
+  aadhaar: aadhaarPath,
+  totalAmount,
+  paymentMethod,
+  paymentStatus
+});
 
     res.status(201).json(newReservation);
 
@@ -157,17 +187,19 @@ const getRoomAvailability = async (req, res) => {
   try {
     const { roomId, checkin, checkout } = req.query;
 
-    // Validate inputs
     if (!roomId || !checkin || !checkout) {
-      return res.status(400).json({ message: "roomId, checkin and checkout are required" });
+      return res.status(400).json({
+        message: "roomId, checkin and checkout are required",
+      });
     }
 
-    const checkinDate = new Date(checkin);
-    const checkoutDate = new Date(checkout);
+   const checkinDate = new Date(checkin + "T00:00:00");
+const checkoutDate = new Date(checkout + "T00:00:00");
 
-    // Validate date format
     if (isNaN(checkinDate) || isNaN(checkoutDate)) {
-      return res.status(400).json({ message: "Invalid checkin or checkout date" });
+      return res.status(400).json({
+        message: "Invalid checkin or checkout date",
+      });
     }
 
     const room = await hotelModel.findById(roomId);
@@ -176,17 +208,41 @@ const getRoomAvailability = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    const overlappingReservations = await reservationModels.find({
+    const reservations = await reservationModels.find({
       roomId,
       checkin: { $lt: checkoutDate },
       checkout: { $gt: checkinDate },
     });
 
-    const roomsLeft = room.totalRooms - overlappingReservations.length;
+    let maxRoomsBooked = 0;
+
+    let currentDate = new Date(checkinDate);
+
+    while (currentDate < checkoutDate) {
+
+      let roomsBookedForDay = 0;
+
+      reservations.forEach((booking) => {
+        const start = new Date(booking.checkin);
+        const end = new Date(booking.checkout);
+
+        if (currentDate >= start && currentDate < end) {
+          roomsBookedForDay++;
+        }
+      });
+
+      if (roomsBookedForDay > maxRoomsBooked) {
+        maxRoomsBooked = roomsBookedForDay;
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const roomsLeft = room.totalRooms - maxRoomsBooked;
 
     res.json({
       totalRooms: room.totalRooms,
-      bookedRooms: overlappingReservations.length,
+      bookedRooms: maxRoomsBooked,
       roomsLeft: roomsLeft < 0 ? 0 : roomsLeft,
     });
 
