@@ -144,30 +144,26 @@ const generateBookedDates = (reservations = [], totalRooms = 1) => {
   return blocked;
 };
 
-useEffect(() => {
+const fetchBookings = async () => {
   if (!formData.roomType) return;
 
-  const fetchBookings = async () => {
-    const res = await axios.get(
-      `${backendUrl}/api/reservations/room/${formData.roomType}`
-    );
+  const res = await axios.get(
+    `${backendUrl}/api/reservations/room/${formData.roomType}`
+  );
 
-     console.log("Reservations from backend:", res.data);
+  const room = rooms.find(r => r._id === formData.roomType);
 
-const room = rooms.find(r => r._id === formData.roomType);
+  const blockedDates = generateBookedDates(
+    Array.isArray(res.data?.reservations)
+      ? res.data.reservations
+      : res.data || [],
+    room?.totalRooms || 1
+  );
 
-console.log("Selected room:", room);
-console.log("Total rooms:", room?.totalRooms);
+  setBookedDates(blockedDates);
+};
 
-const blockedDates = generateBookedDates(
-  Array.isArray(res.data?.reservations)
-    ? res.data.reservations
-    : res.data || [],
-  room?.totalRooms || 1
-);
-    setBookedDates(blockedDates);
-  };
-
+useEffect(() => {
   fetchBookings();
 }, [formData.roomType, rooms]);
 
@@ -356,10 +352,18 @@ if (isAdmin && paymentMode === "cash") {
       }
     );
 
-    alert("Room booked successfully (Pay at Hotel) ✅");
+   alert("Room booked successfully (Pay at Hotel) ✅");
 
-    setShowTerms(false);
-    setPendingReservation(null);
+setShowTerms(false);
+setPendingReservation(null);
+
+fetchBookings();   // ⭐ ADD THIS
+
+    setFormData((prev) => ({
+  ...prev,
+  checkIn: null,
+  checkOut: null
+}));
 
     return;
 
@@ -367,6 +371,8 @@ if (isAdmin && paymentMode === "cash") {
 
     console.log(error);
     alert("Booking failed ❌");
+
+    
 
     return;
   }
@@ -397,8 +403,20 @@ if (isAdmin && paymentMode === "cash") {
             }
           );
 
-          alert("Payment Successful 🎉");
-          setShowTerms(false);
+      alert("Payment Successful 🎉");
+
+setShowTerms(false);
+setPendingReservation(null);
+
+fetchBookings();   // ⭐ ADD THIS
+
+
+setFormData((prev) => ({
+  ...prev,
+  checkIn: null,
+  checkOut: null
+}));
+setBookedDates([]);
 
         } catch (err) {
 
@@ -658,32 +676,34 @@ const nights =
       })
     }
     excludeDates={bookedDates}
+    filterDate={(date) => isDateAvailable(date)}   // ✅ ADD THIS
     minDate={new Date()}
     dateFormat="dd/MM/yyyy"
     placeholderText="Select Check-in"
     popperPlacement="bottom-start"
     popperClassName="z-50"
     portalId="root"
-   className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
+    className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
   />
 </div>
 
 <div className="relative">
-  <DatePicker   
+  <DatePicker
     selected={formData.checkOut}
     onChange={(date) =>
       setFormData({ ...formData, checkOut: date })
     }
-      excludeDates={bookedDates.filter(
-    (d) => d.toDateString() !== formData.checkIn?.toDateString()
-  )}
+    excludeDates={bookedDates.filter(
+      (d) => d.toDateString() !== formData.checkIn?.toDateString()
+    )}
+    filterDate={(date) => isDateAvailable(date)}   // ✅ ADD THIS
     minDate={formData.checkIn || new Date()}
     dateFormat="dd/MM/yyyy"
     placeholderText="Select Check-out"
     popperPlacement="bottom-start"
     popperClassName="z-50"
     portalId="root"
-  className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
+    className="w-full border border-gray-300 rounded-lg px-23 py-3 md:py-4"
   />
 </div>
 
