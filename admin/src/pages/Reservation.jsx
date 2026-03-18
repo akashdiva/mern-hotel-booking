@@ -4,6 +4,7 @@ import { backendUrl } from "../App";
 
 const Reservation = () => {
   const [reservations, setReservations] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // 🔹 Fetch reservations
   const fetchReservations = async () => {
@@ -93,10 +94,12 @@ const Reservation = () => {
 </td>
 <td className="p-3">
   {res.aadhaar ? (
-   <a href={`${backendUrl}/${res.aadhaar}`}>
-  <img src={`${backendUrl}/${res.aadhaar}`} />
-</a>
-
+  <img 
+    src={`${backendUrl}/${res.aadhaar}`} 
+    alt="Aadhaar"
+    className="w-16 h-12 md:w-20 md:h-14 object-cover rounded shadow cursor-pointer hover:opacity-80 transition-opacity border"
+    onClick={() => setSelectedImage(`${backendUrl}/${res.aadhaar}`)}
+  />
   ) : (
     "No Image"
   )}
@@ -115,6 +118,32 @@ const Reservation = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Full Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="absolute -top-12 right-0 text-white text-4xl font-bold hover:text-gray-300 transition-colors"
+              onClick={() => setSelectedImage(null)}
+            >
+              &times;
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Aadhaar Full Size" 
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-white" 
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

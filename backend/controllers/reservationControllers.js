@@ -2,6 +2,7 @@
 
 import reservationModels from "../models/reservationModels.js";
 import hotelModel from "../models/hotelModels.js";
+import { assignAvailableRoomNumber } from "../utils/roomUtils.js";
 
 
 
@@ -161,6 +162,10 @@ if(paymentMethod === "online"){
   paymentStatus = "paid";
 }
 
+if (!roomNumber) {
+  roomNumber = await assignAvailableRoomNumber(roomId, checkinDate, checkoutDate);
+}
+
   const newReservation = await reservationModels.create({
   name,
   email,
@@ -228,7 +233,7 @@ const getRoomReservations = async (req, res) => {
 
     const reservations = await reservationModels.find(
       { roomId },
-      { checkin: 1, checkout: 1 }
+      { checkin: 1, checkout: 1, roomNumber: 1 }
     );
 
     res.json(reservations);

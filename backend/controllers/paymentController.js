@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import Reservation from "../models/reservationModels.js";
+import { assignAvailableRoomNumber } from "../utils/roomUtils.js";
 import { sendBookingEmail } from "../utils/sendEmail.js";
 import { sendWhatsappMessage } from "../utils/sendWhatsapp.js";
 
@@ -60,6 +61,14 @@ export const verifyPayment = async (req, res) => {
     // =========================
 
     if (paymentMode === "cash") {
+      let assignedRoomNumber = bookingData.roomNumber || null;
+      if (!assignedRoomNumber) {
+        assignedRoomNumber = await assignAvailableRoomNumber(
+          bookingData.roomId,
+          new Date(bookingData.checkin + "T00:00:00"),
+          new Date(bookingData.checkout + "T00:00:00")
+        );
+      }
 
       const reservation = new Reservation({
         name: bookingData.name,
@@ -74,7 +83,8 @@ export const verifyPayment = async (req, res) => {
         guests: bookingData.guests,
         totalAmount: bookingData.totalAmount,
         aadhaar: bookingData.aadhaar ? String(bookingData.aadhaar) : "",
-        paymentId: "PAY_AT_HOTEL"
+        paymentId: "PAY_AT_HOTEL",
+        roomNumber: assignedRoomNumber
       });
 
       await reservation.save();
@@ -107,6 +117,14 @@ await sendWhatsappMessage(bookingWithPayment);
       .digest("hex");
 
     if (generated_signature === razorpay_signature) {
+      let assignedOnlineRoomNumber = bookingData.roomNumber || null;
+      if (!assignedOnlineRoomNumber) {
+        assignedOnlineRoomNumber = await assignAvailableRoomNumber(
+          bookingData.roomId,
+          new Date(bookingData.checkin + "T00:00:00"),
+          new Date(bookingData.checkout + "T00:00:00")
+        );
+      }
 
    const reservation = new Reservation({
   name: bookingData.name,
@@ -125,7 +143,8 @@ await sendWhatsappMessage(bookingWithPayment);
   razorpayOrderId: razorpay_order_id,    
 
   paymentMode: "online",
-  paymentStatus: "paid"
+  paymentStatus: "paid",
+  roomNumber: assignedOnlineRoomNumber
 });
 
       await reservation.save();

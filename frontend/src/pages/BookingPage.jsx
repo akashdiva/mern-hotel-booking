@@ -156,11 +156,22 @@ const fetchBookings = async () => {
 
   const room = rooms.find(r => r._id === formData.roomType);
 
+  let reservationsList = Array.isArray(res.data?.reservations)
+    ? res.data.reservations
+    : res.data || [];
+
+  let relevantTotalRooms = room?.totalRooms || 1;
+
+  if (isAdmin && roomNumber) {
+    reservationsList = reservationsList.filter(
+      (r) => r.roomNumber && Number(r.roomNumber) === roomNumber
+    );
+    relevantTotalRooms = 1;
+  }
+
   const blockedDates = generateBookedDates(
-    Array.isArray(res.data?.reservations)
-      ? res.data.reservations
-      : res.data || [],
-    room?.totalRooms || 1
+    reservationsList,
+    relevantTotalRooms
   );
 
   setBookedDates(blockedDates);

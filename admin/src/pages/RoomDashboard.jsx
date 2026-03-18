@@ -5,23 +5,23 @@ export const backendUrl="http://localhost:4000";
 
 
 const initialRooms = [
-  { id: 101, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
-  { id: 102, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
-  { id: 103, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
-  { id: 104, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
+  { id: 101, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
+  { id: 102, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
+  { id: 103, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
+  { id: 104, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
 
   { id: 105, type: "Family AC", roomTypeId: "69b244e59252ead29e761d18" },
 
-  { id: 106, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
-  { id: 107, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
+  { id: 106, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
+  { id: 107, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
 
-  { id: 108, type: "NonAC", roomTypeId: "69b1c99f1b689da0f1eb997a" },
-  { id: 109, type: "NonAC", roomTypeId: "69b1c99f1b689da0f1eb997a" },
-  { id: 110, type: "NonAC", roomTypeId: "69b1c99f1b689da0f1eb997a" },
-  { id: 111, type: "NonAC", roomTypeId: "69b1c99f1b689da0f1eb997a" },
+  { id: 108, type: "Non-AC", roomTypeId: "69bae1788dfbbf6945f276ff" },
+  { id: 109, type: "Non-AC", roomTypeId: "69bae1788dfbbf6945f276ff" },
+  { id: 110, type: "Non-AC", roomTypeId: "69bae1788dfbbf6945f276ff" },
+  { id: 111, type: "Non-AC", roomTypeId: "69bae1788dfbbf6945f276ff" },
 
-  { id: 112, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" },
-  { id: 113, type: "AC", roomTypeId: "69b2447b9252ead29e761d13" }
+  { id: 112, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" },
+  { id: 113, type: "AC Rooms", roomTypeId: "69badc258dfbbf6945f2758f" }
 ];
 
 const RoomDashboard = () => {
@@ -67,6 +67,7 @@ const normalize = (date) => {
 
 const getRoomStatus = (roomId) => {
   const today = normalize(new Date());
+  let isReserved = false;
 
   for (const r of reservations) {
 
@@ -80,13 +81,13 @@ const getRoomStatus = (roomId) => {
       }
 
       if (today < checkin) {
-        return "reserved";
+        isReserved = true;
       }
 
     }
   }
 
-  return "available";
+  return isReserved ? "reserved" : "available";
 };
   /* DASHBOARD COUNTS */
 
@@ -191,8 +192,6 @@ const availableRooms = rooms.filter(room =>
 
               </div>
 
-           {status === "available" && (
-
 <button
   onClick={() =>
     window.location.href =
@@ -201,12 +200,10 @@ const availableRooms = rooms.filter(room =>
       "?admin=true&roomNumber=" +
       room.id
   }
-  className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg"
+  className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
 >
   Book Now
 </button>
-
-)}
 
             </div>
 
