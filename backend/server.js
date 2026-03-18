@@ -19,10 +19,7 @@ connectDB()
 connectCloudinary()
 
 // Middlewares
-app.use(cors({
-  origin: "https://raghuresidency.in",
-  credentials: true
-}))
+app.use(cors())
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

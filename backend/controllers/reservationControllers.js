@@ -3,10 +3,12 @@
 import reservationModels from "../models/reservationModels.js";
 import hotelModel from "../models/hotelModels.js";
 
+
+
 const createReservation = async (req, res) => {
-  
+
   try {
-  const {
+ const {
   name,
   email,
   phone,
@@ -18,10 +20,35 @@ const createReservation = async (req, res) => {
   paymentMethod
 } = req.body;
 
-   const aadhaarPath = req.file ? req.file.path : null;
+let roomNumber = req.body.roomNumber ? Number(req.body.roomNumber) : null;
 
+  console.log("Body keys:", Object.keys(req.body));
+console.log("RoomNumber value:", req.body.roomNumber);
+  console.log("Room Number received:", roomNumber);
+   console.log("Incoming reservation request");
+  console.log("Body:", req.body);
+  console.log("AADHAAR FROM BODY:", req.body.aadhaarPath);
+console.log("AADHAAR FROM FILE:", req.file);
+  console.log("File:", req.file);
+
+
+
+const aadhaarPath = req.body.aadhaarPath || (req.file ? req.file.path : null);
+    console.log("aadhar ",req.file)
 const checkinDate = new Date(checkin + "T00:00:00");
 const checkoutDate = new Date(checkout + "T00:00:00");
+
+console.log({
+  name,
+  email,
+  phone,
+  checkin,
+  checkout,
+  roomId,
+  adults,
+  children,
+  aadhaarPath
+});
 
   if (
   !name ||
@@ -43,6 +70,23 @@ const checkoutDate = new Date(checkout + "T00:00:00");
       return res.status(400).json({ message: "Room not found" });
     }
 
+    // 🚫 Prevent same room number double booking
+if (roomNumber) {
+
+  const existingRoomBooking = await reservationModels.findOne({
+    roomNumber,
+    checkin: { $lt: checkoutDate },
+    checkout: { $gt: checkinDate }
+  });
+
+  if (existingRoomBooking) {
+    return res.status(400).json({
+      message: `Room ${roomNumber} is already booked for the selected dates`
+    });
+  }
+
+}
+
 
    // ✅ Capacity validation
 if (adults > room.maxAdults || children > room.maxChildren) {
@@ -52,11 +96,23 @@ if (adults > room.maxAdults || children > room.maxChildren) {
 }
 
     // Find overlapping reservations
- const reservations = await reservationModels.find({
-  roomId,
-  checkin: { $lt: checkoutDate },
-  checkout: { $gt: checkinDate },
-});
+let reservations;
+
+if (roomNumber) {
+  // Admin booking → check specific room
+  reservations = await reservationModels.find({
+    roomNumber,
+    checkin: { $lt: checkoutDate },
+    checkout: { $gt: checkinDate },
+  });
+} else {
+  // Customer booking → check room type availability
+  reservations = await reservationModels.find({
+    roomId,
+    checkin: { $lt: checkoutDate },
+    checkout: { $gt: checkinDate },
+  });
+}
 
 let currentDate = new Date(checkinDate);
 
@@ -115,11 +171,13 @@ if(paymentMethod === "online"){
   children,
   roomName: room.name,
   roomId,
+    roomNumber,
   aadhaar: aadhaarPath,
   totalAmount,
-  paymentMethod,
+ paymentMode: paymentMethod,
   paymentStatus
 });
+console.log("RoomNumber:", roomNumber);
 
     res.status(201).json(newReservation);
 
@@ -187,16 +245,22 @@ const getRoomAvailability = async (req, res) => {
   try {
     const { roomId, checkin, checkout } = req.query;
 
+    console.log("Incoming query:", { roomId, checkin, checkout });
+
     if (!roomId || !checkin || !checkout) {
+      console.log("Missing required fields");
       return res.status(400).json({
         message: "roomId, checkin and checkout are required",
       });
     }
 
-   const checkinDate = new Date(checkin + "T00:00:00");
-const checkoutDate = new Date(checkout + "T00:00:00");
+    const checkinDate = new Date(checkin + "T00:00:00");
+    const checkoutDate = new Date(checkout + "T00:00:00");
+
+    console.log("Parsed Dates:", { checkinDate, checkoutDate });
 
     if (isNaN(checkinDate) || isNaN(checkoutDate)) {
+      console.log("Invalid date format");
       return res.status(400).json({
         message: "Invalid checkin or checkout date",
       });
@@ -204,7 +268,10 @@ const checkoutDate = new Date(checkout + "T00:00:00");
 
     const room = await hotelModel.findById(roomId);
 
+    console.log("Fetched room:", room);
+
     if (!room) {
+      console.log("Room not found");
       return res.status(404).json({ message: "Room not found" });
     }
 
@@ -214,11 +281,13 @@ const checkoutDate = new Date(checkout + "T00:00:00");
       checkout: { $gt: checkinDate },
     });
 
-    let maxRoomsBooked = 0;
+    console.log("Matching reservations:", reservations);
 
+    let maxRoomsBooked = 0;
     let currentDate = new Date(checkinDate);
 
     while (currentDate < checkoutDate) {
+      console.log("Checking date:", currentDate);
 
       let roomsBookedForDay = 0;
 
@@ -226,10 +295,14 @@ const checkoutDate = new Date(checkout + "T00:00:00");
         const start = new Date(booking.checkin);
         const end = new Date(booking.checkout);
 
+        console.log("Booking range:", { start, end });
+
         if (currentDate >= start && currentDate < end) {
           roomsBookedForDay++;
         }
       });
+
+      console.log("Rooms booked for this day:", roomsBookedForDay);
 
       if (roomsBookedForDay > maxRoomsBooked) {
         maxRoomsBooked = roomsBookedForDay;
@@ -238,7 +311,15 @@ const checkoutDate = new Date(checkout + "T00:00:00");
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
+    console.log("Max rooms booked in range:", maxRoomsBooked);
+
     const roomsLeft = room.totalRooms - maxRoomsBooked;
+
+    console.log("Final availability:", {
+      totalRooms: room.totalRooms,
+      bookedRooms: maxRoomsBooked,
+      roomsLeft: roomsLeft < 0 ? 0 : roomsLeft,
+    });
 
     res.json({
       totalRooms: room.totalRooms,
@@ -247,7 +328,7 @@ const checkoutDate = new Date(checkout + "T00:00:00");
     });
 
   } catch (error) {
-    console.log(error);
+    console.log("Error occurred:", error);
     res.status(500).json({ message: "Error checking availability" });
   }
 };

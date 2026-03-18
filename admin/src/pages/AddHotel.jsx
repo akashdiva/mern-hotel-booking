@@ -16,6 +16,7 @@ const AddHotel = ({ token }) => {
   const [totalRooms, setTotalRooms] = useState("");
   const [maxAdults, setMaxAdults] = useState("");
 const [maxChildren, setMaxChildren] = useState("");
+const [roomNumbers, setRoomNumbers] = useState("");
 
   const roomSubmission = async (e) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ const [maxChildren, setMaxChildren] = useState("");
     setLoading(true);
 
     // ✅ ADD THIS VALIDATION HERE
-    if (!name || !description || !price || !totalRooms || image.length === 0) {
+  if (!name || !description || !price || !totalRooms || !roomNumbers || image.length === 0){
       alert("Please fill all fields");
       setLoading(false);
       return;
@@ -38,6 +39,7 @@ formData.append("price", price);
 formData.append("totalRooms", totalRooms); // ADD THIS
 formData.append("maxAdults", maxAdults);
 formData.append("maxChildren", maxChildren);
+formData.append("roomNumbers", roomNumbers);
 
       image.forEach((img) => {
         formData.append("image", img);
@@ -55,6 +57,7 @@ formData.append("maxChildren", maxChildren);
 setDescription("");
 setPrice("");
 setTotalRooms("");
+setRoomNumbers("");
 setImage([]);
       } else {
         alert(response.data.message);
@@ -172,6 +175,22 @@ setImage([]);
   onChange={(e) => setTotalRooms(e.target.value)}
   className="w-full max-w-[500px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 outline-none"
 />
+</div>
+
+<div className="w-full">
+  <p className="mb-2 text-[20px] font-semibold">Room Numbers</p>
+
+  <input
+    type="text"
+    placeholder="Example: 101,102,103,104"
+    value={roomNumbers}
+    onChange={(e) => setRoomNumbers(e.target.value)}
+    className="w-full max-w-[500px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 outline-none"
+  />
+
+  <p className="text-sm text-gray-500 mt-1">
+    Enter room numbers separated by commas
+  </p>
 </div>
 
 <input

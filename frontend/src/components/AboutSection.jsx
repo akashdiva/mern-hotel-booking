@@ -10,11 +10,18 @@ const AboutSection = () => {
         </h2>
 
         <p className="text-gray-600 text-base md:text-lg leading-relaxed">
-          Located in the heart of Tiruvallur on the prominent 60 Feet Road, 
           Raghu Residency offers comfortable and affordable accommodation for 
           both business and leisure travelers. Our prime location opposite 
           Rose Mahal makes us easily accessible and convenient for exploring 
           the city.
+            <p className="text-gray-600">
+            Located in the heart of Tiruvallur on the prominent
+                <br/>33, 2nd Floor,Thiruvallur Municipality Office, <br />
+                Opposite to Rose Mahal, <br />
+                VM Nagar, Tiruvallur – 602001, <br />
+                Tamil Nadu, India
+              </p> 
+         
         </p>
 
       </div>

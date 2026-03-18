@@ -6,6 +6,11 @@ const addHotel = async (req, res) => {
   try {
    const { name, description, price, totalRooms, maxAdults, maxChildren } = req.body;
 
+
+   const roomNumbersArray = req.body.roomNumbers
+  .split(",")
+  .map(num => Number(num.trim()));
+
     const images = req.files; // ✅ changed from req.file
 
     let imageUrls = [];
@@ -32,6 +37,7 @@ const hotelData = {
   totalRooms: Number(totalRooms),
   maxAdults: Number(maxAdults),
   maxChildren: Number(maxChildren),
+    roomNumbers: roomNumbersArray,
   image: imageUrls,
   date: Date.now()
 };

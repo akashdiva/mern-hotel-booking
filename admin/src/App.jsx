@@ -6,9 +6,10 @@ import AddHotel from "./pages/AddHotel";
 import ListHotel from "./pages/ListHotel";
 import Reservation from "./pages/Reservation";
 import RoomDashboard from "./pages/RoomDashboard";
-import AdminBooking from "./pages/AdminBooking"
 
-export const backendUrl = "https://api.raghuresidency.in";
+
+//export const backendUrl = "https://api.raghuresidency.in";
+export const backendUrl="http://localhost:4000";
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -35,7 +36,7 @@ const App = () => {
               <Route path="/list" element={<ListHotel token={token} />} />
               <Route path="/reservation" element={<Reservation />} />
               <Route path="/rooms" element={<RoomDashboard />} />
-              <Route path="/admin-booking" element={<AdminBooking />} />
+            
             </Routes>
           </div>
         </div>

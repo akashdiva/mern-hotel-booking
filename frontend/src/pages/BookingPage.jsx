@@ -1,8 +1,9 @@
-import { useParams, useSearchParams } from "react-router-dom";
+
 import { useContext, useEffect, useState } from "react";
 import { RoomContext } from "../context/RoomContext";
 import { backendUrl } from "../App";
 import axios from "axios";
+import { useParams, useSearchParams } from "react-router-dom";
 import Tesseract from "tesseract.js";
 import termsImage from "../assets/terms-conditions.jpeg";
 
@@ -15,10 +16,12 @@ const BookingPage = () => {
   const { id } = useParams(); // get room id from URL
   const [searchParams] = useSearchParams();
 const isAdmin = searchParams.get("admin") === "true";
+const roomNumber = Number(searchParams.get("roomNumber"));
 const { rooms, fetchHotelRoom } = useContext(RoomContext);
 const [paymentMode, setPaymentMode] = useState("online");
 const [showTerms, setShowTerms] = useState(false);
 const [isValidating, setIsValidating] = useState(false);
+const [scrolledToBottom, setScrolledToBottom] = useState(false);
 
 const [pendingReservation, setPendingReservation] = useState(null);
 const [showGuestDropdown, setShowGuestDropdown] = useState(false);
@@ -167,6 +170,14 @@ useEffect(() => {
   fetchBookings();
 }, [formData.roomType, rooms]);
 
+const handleScroll = (e) => {
+  const { scrollTop, scrollHeight, clientHeight } = e.target;
+
+  if (scrollTop + clientHeight >= scrollHeight - 5) {
+    setScrolledToBottom(true);
+  }
+};
+
 const handleGuestChange = (type, action) => {
   setFormData((prev) => {
     const newValue =
@@ -230,6 +241,23 @@ const isDateAvailable = (date) => {
       new Date(booked).toDateString() === date.toDateString()
   );
 };
+
+// Check if a checkout date is valid (it shouldn't cross any booked dates)
+const isCheckoutAvailable = (date) => {
+  if (!formData.checkIn) return isDateAvailable(date);
+  
+  // Find the first booked date AFTER the check-in date
+  const nextBookedDate = [...bookedDates]
+    .sort((a, b) => new Date(a) - new Date(b))
+    .find((booked) => new Date(booked) > formData.checkIn);
+
+  // If there is a booked date coming up, the checkout date cannot be ON or AFTER it
+  if (nextBookedDate && date > nextBookedDate) {
+    return false;
+  }
+  
+  return isDateAvailable(date);
+};
   // // ✅ Aadhaar OCR Validation
   // const handleAadhaarUpload = async (e) => {
   //   const file = e.target.files[0];
@@ -284,6 +312,7 @@ const isDateAvailable = (date) => {
 
  const handleSubmit = async (e) => {
   e.preventDefault();
+   console.log("AADHAAR BEFORE SUBMIT:", aadhaar);
 
 if (!aadhaar) {
   alert("Please upload and verify Aadhaar");
@@ -317,12 +346,16 @@ if (!aadhaar) {
   guests: totalGuests,
   roomName: selectedRoom.name,
   roomId: selectedRoom._id,
+   roomNumber: roomNumber || null, 
   totalAmount,
-  aadhaar: aadhaar.name,
+ aadhaar: aadhaar,
+
   paymentMode
 };
   setPendingReservation(bookingDetails);
   setShowTerms(true);
+
+  
 };
 
 const startPayment = async () => {
@@ -338,12 +371,23 @@ if (isAdmin && paymentMode === "cash") {
     form.append("phone", pendingReservation.phone);
     form.append("checkin", pendingReservation.checkin);
     form.append("checkout", pendingReservation.checkout);
-    form.append("roomId", pendingReservation.roomId);
+  
+   form.append("roomId", pendingReservation.roomId);
+if (pendingReservation.roomNumber) {
+  form.append("roomNumber", pendingReservation.roomNumber || "");
+}
     form.append("adults", pendingReservation.adults);
     form.append("children", pendingReservation.children);
     form.append("paymentMethod", "cash");
-    form.append("aadhaar", aadhaar);
+form.append("aadhaarPath", aadhaar);
 
+  
+
+ console.log("FormData being sent:");
+
+for (const pair of form.entries()) {
+  console.log(pair[0], pair[1]);
+}
     await axios.post(
       `${backendUrl}/api/reservations/create`,
       form,
@@ -386,48 +430,64 @@ fetchBookings();   // ⭐ ADD THIS
     );
 
     const options = {
-      key: "rzp_live_SNa0309z3lmsmB",
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.id,
+  key: "rzp_live_SNa0309z3lmsmB",
+  amount: order.amount,
+  currency: order.currency,
+  order_id: order.id,
 
-      handler: async function (response) {
+  name: "Raghu Residency",
+  description: "Room Booking Payment",
 
-        try {
+  prefill: {
+    name: pendingReservation.name,
+    email: pendingReservation.email,
+    contact: pendingReservation.phone
+  },
 
-          const res = await axios.post(
-            `${backendUrl}/api/payment/verify-payment`,
-            {
-              ...response,
-              bookingData: pendingReservation
-            }
-          );
+  notes: {
+    hotel: "Raghu Residency",
+    bookingType: "Room Reservation"
+  },
 
-      alert("Payment Successful 🎉");
+handler: async function (response) {
 
-setShowTerms(false);
-setPendingReservation(null);
+  try {
 
-fetchBookings();   // ⭐ ADD THIS
+    await axios.post(
+      `${backendUrl}/api/payment/verify-payment`,
+      {
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_signature: response.razorpay_signature,
+        bookingData: pendingReservation
+      }
+    );
 
+    alert("Payment Successful 🎉");
 
-setFormData((prev) => ({
-  ...prev,
-  checkIn: null,
-  checkOut: null
-}));
-setBookedDates([]);
+    setShowTerms(false);
+    setPendingReservation(null);
 
-        } catch (err) {
+    fetchBookings();
 
-          alert("Payment done but booking failed ❌");
+    setFormData((prev) => ({
+      ...prev,
+      checkIn: null,
+      checkOut: null
+    }));
 
-        }
+    setBookedDates([]);
 
-      },
+  } catch (err) {
 
-      theme: { color: "#f97316" },
-    };
+    alert("Payment done but booking failed ❌");
+
+  }
+
+},
+
+  theme: { color: "#f97316" },
+};
 
     const rzp = new window.Razorpay(options);
     rzp.open();
@@ -453,6 +513,9 @@ const nights =
         (1000 * 60 * 60 * 24)
       )
     : 0;
+
+
+    
 
   return (
     <div className="bg-gray-100 min-h-screen py-16">
@@ -521,7 +584,10 @@ const nights =
 
 <AadhaarUpload
   onUploadStart={() => setAadhaar(null)}
-  onVerified={(data) => setAadhaar(data.file)}
+  onVerified={(data) => {
+    setAadhaar(data.filePath); // ✅ FINAL FIX
+    console.log("AADHAAR PATH:", data.filePath);
+  }}
 />
 
   {aadhaar && (
@@ -547,7 +613,7 @@ const nights =
       className="w-full border border-gray-300 rounded-lg px-4 py-3"
     >
       <option value="online">Pay Online</option>
-      <option value="cash">Pay at Hotel</option>
+      <option value="cash">Cash</option>
     </select>
   </div>
 )}
@@ -696,7 +762,7 @@ const nights =
     excludeDates={bookedDates.filter(
       (d) => d.toDateString() !== formData.checkIn?.toDateString()
     )}
-    filterDate={(date) => isDateAvailable(date)}   // ✅ ADD THIS
+    filterDate={(date) => isCheckoutAvailable(date)}   // ✅ FIXED THIS
     minDate={formData.checkIn || new Date()}
     dateFormat="dd/MM/yyyy"
     placeholderText="Select Check-out"
@@ -765,7 +831,8 @@ const nights =
       </div>
 
       {/* SCROLLABLE CONTENT */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6 text-gray-700">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 text-gray-700"
+       onScroll={handleScroll}>
 
         <div>
           <h3 className="font-semibold text-lg">🕒 Check-in & Occupancy</h3>
@@ -825,14 +892,19 @@ In case of unforeseen events beyond our control (natural disasters, government r
           Cancel
         </button>
 
-        <button
-          onClick={startPayment}
-          className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg"
-        >
-          {isAdmin && paymentMode === "cash"
-  ? "Confirm Booking"
-  : "Accept & Pay"}
-        </button>
+      <button
+  onClick={startPayment}
+  disabled={!scrolledToBottom}
+  className={`px-6 py-2 rounded-lg text-white
+  ${scrolledToBottom 
+    ? "bg-orange-600 hover:bg-orange-700" 
+    : "bg-gray-400 cursor-not-allowed"}
+  `}
+>
+  {isAdmin && paymentMode === "cash"
+    ? "Confirm Booking"
+    : "Accept & Pay"}
+</button>
 
       </div>
 

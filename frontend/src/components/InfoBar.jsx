@@ -13,8 +13,12 @@ const InfoBar = () => {
         <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-3 md:gap-4">
           <FaMapMarkerAlt className="text-2xl" />
           <div>
-            <h3 className="font-semibold text-lg">Location</h3>
-            <p className="text-sm">60 Feet Road, V.M Nagar</p>
+             <p className="text-white-600">
+                33, 2nd Floor,Thiruvallur Municipality Office, <br />
+                Opposite to Rose Mahal, <br />
+                VM Nagar, Tiruvallur – 602001, <br />
+                Tamil Nadu, India
+              </p>
           </div>
         </div>
 

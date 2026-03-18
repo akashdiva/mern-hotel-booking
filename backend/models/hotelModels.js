@@ -12,6 +12,9 @@ const hotelSchema = new mongoose.Schema({
 
   totalRooms: { type: Number, required: true },
 
+  // ⭐ ADD THIS
+  roomNumbers: { type: [Number], required: true },
+
   maxAdults: { type: Number, required: true },
 
   maxChildren: { type: Number, required: true }

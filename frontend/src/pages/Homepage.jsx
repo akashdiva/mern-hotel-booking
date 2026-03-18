@@ -17,8 +17,8 @@ const Homepage = () => {
       <Hero />
       <InfoBar/>
        <AboutSection/>
+         <Gallery/>
        <Amenities/>
-        <Gallery/>
        <Reviews/>
        <BookingCTA/>
       

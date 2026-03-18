@@ -33,6 +33,10 @@ const reservationSchema = new mongoose.Schema(
     type: String,
     required: true,
   },
+  razorpayOrderId: {
+  type: String
+},
+
 
   adults: { type: Number, required: true },
   children: { type: Number, required: true },
@@ -43,8 +47,11 @@ const reservationSchema = new mongoose.Schema(
     type: mongoose.Schema.Types.ObjectId,
     ref: "hotel",
     required: true
-  }
-
+  },
+roomNumber: {
+  type: Number,
+  default: null
+}
 },
 { timestamps: true }
 );

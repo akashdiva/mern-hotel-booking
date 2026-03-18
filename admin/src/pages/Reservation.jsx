@@ -57,6 +57,7 @@ const Reservation = () => {
               <th className="p-3">Guests</th>
               <th className="p-3">Check-in</th>
               <th className="p-3">Check-out</th>
+               <th className="p-3">Aadhaar</th> 
               <th className="p-3">Delete</th>
             </tr>
           </thead>
@@ -89,6 +90,16 @@ const Reservation = () => {
   {new Date(res.checkout).toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
   })}
+</td>
+<td className="p-3">
+  {res.aadhaar ? (
+   <a href={`${backendUrl}/${res.aadhaar}`}>
+  <img src={`${backendUrl}/${res.aadhaar}`} />
+</a>
+
+  ) : (
+    "No Image"
+  )}
 </td>
                   <td className="p-3">
                     <button

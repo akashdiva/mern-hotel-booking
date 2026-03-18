@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Tesseract from "tesseract.js";
 import jsQR from "jsqr";
-
+import { backendUrl } from "../App";
 const AadhaarUpload = ({ onVerified, onUploadStart }) => {
 
   const [isValidating, setIsValidating] = useState(false);
@@ -96,13 +96,36 @@ const AadhaarUpload = ({ onVerified, onUploadStart }) => {
 
       setVerified(true);
 
-      if (onVerified) {
-        onVerified({
-          aadhaarNumber,
-          qrData,
-          file
-        });
-      }
+     // ✅ Upload to backend after verification
+const formData = new FormData();
+formData.append("aadhaarImage", file);
+formData.append("aadhaarNumber", aadhaarNumber);
+formData.append("qrData", qrData || "");
+
+const res = await fetch(`${backendUrl}/api/aadhaar/verify`, {
+  method: "POST",
+  body: formData,
+});
+
+const responseText = await res.text();
+console.log("RAW RESPONSE:", responseText);
+
+const data = responseText ? JSON.parse(responseText) : {};
+
+if (!data.success) {
+  throw new Error("Upload failed");
+}
+
+setVerified(true);
+
+// ✅ Send FILE PATH to parent
+if (onVerified) {
+  onVerified({
+    aadhaarNumber,
+    qrData,
+    filePath: data.filePath // ⭐ THIS IS THE FIX
+  });
+}
 
     } catch (err) {
 

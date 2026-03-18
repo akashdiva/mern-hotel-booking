@@ -42,10 +42,10 @@ Rooms are at 2nd floor but easily accessible, no strain. Would surely recommend 
     name: "Anusha Mari",
     time: "1 years ago",
     rating: 4,
-    text: `I booked room for my brother and mom, the room was very neat and all the amenities are too good. 
-The management was very helpful..The only thing we felt is there could be a generator, because while we entered 
-we faced power cut..so had to wait till power is back.. Otherwise everything is perfect..rooms is same as they 
-posted in the pictures..worth for money...`,
+    text: `A perfect lodging place in Tiruvallur. The guidance of the owner is a great thing and their service is also great.
+     One need not wander around for food if you pay a reasonable amount they provide you a good food.
+     Rooms are neatly maintained & tariffs are reasonable. Good place for a family stay. 
+All the best team.`,
     rooms: 5.0,
     service: 4.0,
     location: 4.0,

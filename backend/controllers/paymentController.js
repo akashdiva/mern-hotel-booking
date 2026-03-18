@@ -1,6 +1,8 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import Reservation from "../models/reservationModels.js";
+import { sendBookingEmail } from "../utils/sendEmail.js";
+import { sendWhatsappMessage } from "../utils/sendWhatsapp.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -12,7 +14,7 @@ const razorpay = new Razorpay({
 export const createOrder = async (req, res) => {
   try {
 
-    console.log("CREATE ORDER REQUEST:", req.body);
+    
 
     const { totalAmount } = req.body;
 
@@ -24,7 +26,7 @@ export const createOrder = async (req, res) => {
 
     const order = await razorpay.orders.create(options);
 
-    console.log("ORDER CREATED:", order);
+   
 
     res.json(order);
 
@@ -41,7 +43,7 @@ export const createOrder = async (req, res) => {
 // ✅ VERIFY PAYMENT
 export const verifyPayment = async (req, res) => {
 
-  console.log("VERIFY PAYMENT BODY:", req.body);
+  
 
   const {
     razorpay_order_id,
@@ -77,6 +79,15 @@ export const verifyPayment = async (req, res) => {
 
       await reservation.save();
 
+       const bookingWithPayment = {
+    ...bookingData,
+    paymentId: "Cash"
+  };
+     
+await sendWhatsappMessage(bookingWithPayment);
+
+ await sendBookingEmail(bookingWithPayment);
+
       return res.json({
         success: true,
         message: "Reservation created (Pay at Hotel)"
@@ -97,23 +108,38 @@ export const verifyPayment = async (req, res) => {
 
     if (generated_signature === razorpay_signature) {
 
-      const reservation = new Reservation({
-        name: bookingData.name,
-        email: bookingData.email,
-        phone: bookingData.phone,
-        checkin: bookingData.checkin,
-        checkout: bookingData.checkout,
-        roomId: bookingData.roomId,
-        roomName: bookingData.roomName,
-        adults: bookingData.adults,
-        children: bookingData.children,
-        guests: bookingData.guests,
-        totalAmount: bookingData.totalAmount,
-        aadhaar: bookingData.aadhaar ? String(bookingData.aadhaar) : "",
-        paymentId: razorpay_payment_id
-      });
+   const reservation = new Reservation({
+  name: bookingData.name,
+  email: bookingData.email,
+  phone: bookingData.phone,
+  checkin: bookingData.checkin,
+  checkout: bookingData.checkout,
+  roomId: bookingData.roomId,
+  roomName: bookingData.roomName,
+  adults: bookingData.adults,
+  children: bookingData.children,
+  totalAmount: bookingData.totalAmount,
+ aadhaar: bookingData.aadhaar ? String(bookingData.aadhaar) : "",
+
+  paymentId: razorpay_payment_id,        
+  razorpayOrderId: razorpay_order_id,    
+
+  paymentMode: "online",
+  paymentStatus: "paid"
+});
 
       await reservation.save();
+
+  const bookingWithPayment = {
+  ...bookingData,
+  paymentId: razorpay_payment_id,
+  orderId: razorpay_order_id
+};
+
+await sendWhatsappMessage( bookingWithPayment);
+
+      await sendBookingEmail (bookingWithPayment);
+  
 
       return res.json({
         success: true,

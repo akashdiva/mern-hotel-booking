@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaMapMarkerAlt, FaPhoneAlt, FaClock, FaPaperPlane } from "react-icons/fa";
 import hotelImage from "../assets/contact-page.png";
+import { FaWhatsapp } from "react-icons/fa";
 
 const ContactPage = () => {
 
@@ -225,6 +226,20 @@ Message: ${message}`;
           </form>
         </div>
       </div>
+
+           
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/918667837244"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-600 text-white p-5 rounded-full shadow-2xl text-4xl z-50 animate-bounce"
+      >
+        <FaWhatsapp />
+      </a>
+
+  
 
     </div>
   );
