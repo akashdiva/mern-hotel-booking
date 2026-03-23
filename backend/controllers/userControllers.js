@@ -2,10 +2,10 @@ import jwt from "jsonwebtoken"
 
 const adminLogin =async(req,res)=>{
     try{
-        const {email,password} =req.body
+        const {username,password} =req.body
 
-        if(email ===process.env.ADMIN_EMAIL && password == process.env.ADMIN_PASSWORD){
-               const token =jwt.sign(email+password,process.env.JWT_SECRET)
+        if(username ===process.env.ADMIN_USERNAME && password == process.env.ADMIN_PASSWORD){
+               const token =jwt.sign(username+password,process.env.JWT_SECRET)
                res.json({success:true,token})
         }else{
             res.json({success:false,message:"Invalid login details"})

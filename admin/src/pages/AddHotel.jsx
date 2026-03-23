@@ -193,19 +193,29 @@ setImage([]);
   </p>
 </div>
 
-<input
-  type="number"
-  placeholder="Max Adults"
-  value={maxAdults}
-  onChange={(e) => setMaxAdults(e.target.value)}
-/>
+<div className="w-full flex flex-col sm:flex-row gap-4 max-w-[500px]">
+  <div className="flex-1">
+    <p className="mb-2 text-[20px] font-semibold">Max Adults</p>
+    <input
+      type="number"
+      placeholder="Max Adults"
+      value={maxAdults}
+      onChange={(e) => setMaxAdults(e.target.value)}
+      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 outline-none"
+    />
+  </div>
 
-<input
-  type="number"
-  placeholder="Max Children"
-  value={maxChildren}
-  onChange={(e) => setMaxChildren(e.target.value)}
-/>
+  <div className="flex-1">
+    <p className="mb-2 text-[20px] font-semibold">Max Children</p>
+    <input
+      type="number"
+      placeholder="Max Children"
+      value={maxChildren}
+      onChange={(e) => setMaxChildren(e.target.value)}
+      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 outline-none"
+    />
+  </div>
+</div>
 
         {/* 🔥 Improved Button */}
         <button

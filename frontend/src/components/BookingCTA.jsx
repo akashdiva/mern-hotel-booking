@@ -13,7 +13,7 @@ const BookingCTA = () => {
         </h2>
 
         <p className="text-lg mb-10">
-          Experience comfortable accommodation in Tiruvallur at affordable rates
+          Experience the comfortable accommodation in Thiruvallur at affordable tariff
         </p>
 <Link
   to="/booking/:id"

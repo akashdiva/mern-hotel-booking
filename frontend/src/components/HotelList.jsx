@@ -24,7 +24,14 @@ const RoomCard = ({ room }) => {
 
   
 
-  const images = Array.isArray(image) ? image : [image];
+  const rawImages = Array.isArray(image) ? image : [image];
+  const images = rawImages
+    .filter(Boolean)
+    .filter((img, index, self) => self.indexOf(img) === index);
+
+  if (images.length === 0) {
+    images.push("https://via.placeholder.com/400x300?text=No+Image+Available");
+  }
 
   const [current, setCurrent] = useState(0);
 
@@ -51,15 +58,24 @@ const { adults, children } = getGuestCapacity();
   return (
    <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col h-full">
       {/* 🔥 Image Slider */}
-      <div className="relative">
-        <img
-          src={images[current]}
-          alt={name}
-       className="w-full h-56 md:h-80 object-cover"
-        />
+      <div className="relative overflow-hidden w-full h-56 md:h-80">
+        <div 
+          className="flex h-full transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+        >
+          {images.map((img, i) => (
+            <div key={i} className="w-full h-full flex-shrink-0">
+              <img
+                src={img}
+                alt={`${name} - ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
 
         {/* Price Badge */}
-        <div className="absolute top-4 right-4 bg-[#D35400] text-white px-4 py-2 rounded-lg font-semibold">
+        <div className="absolute top-4 right-4 bg-[#D35400] text-white px-4 py-2 rounded-lg font-semibold z-10 shadow-md">
           ₹{price}/night
         </div>
 
@@ -68,22 +84,17 @@ const { adults, children } = getGuestCapacity();
           <>
             <button
               onClick={prevSlide}
-             className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 
-bg-black/50 hover:bg-black/70 
-text-white p-2 md:p-3 rounded-full"
-                       
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 md:p-3 rounded-full z-10 transition-colors"
             >
               <FaChevronLeft size={18} />
             </button>
 
-           <button
-  onClick={nextSlide}
-  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 
-  bg-black/50 hover:bg-black/70 
-  text-white p-2 md:p-3 rounded-full"
->
-  <FaChevronRight size={18} />
-</button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 md:p-3 rounded-full z-10 transition-colors"
+            >
+              <FaChevronRight size={18} />
+            </button>
           </>
         )}
       </div>
@@ -202,7 +213,7 @@ const HotelList = () => {
           <div className="bg-white p-8 md:p-20 rounded-xl shadow text-center">
             <h3 className="text-xl font-bold mb-3">Cancellation Policy</h3>
             <p className="text-gray-600">
-              Free cancellation up to 24 hours before check-in
+              Free cancellation up to 48 hours before check-in
             </p>
           </div>
 

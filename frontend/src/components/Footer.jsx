@@ -19,9 +19,7 @@ const Footer = () => {
               A comfortable and affordable lodging service in the heart of
               Tiruvallur, offering quality accommodation for travelers and guests.
             </p>
-            <p className="text-gray-300">
-              <span className="font-semibold text-white">GST:</span> 33AMUPR9962N1ZS
-            </p>
+    
           </div>
 
           {/* Column 2 */}
@@ -31,10 +29,9 @@ const Footer = () => {
             <div className="flex items-start gap-4 mb-4">
               <FaMapMarkerAlt className="mt-1 text-gray-400" />
               <p className="text-gray-300">
-                33, 2nd Floor, 60 Feet Rd, opp. to Rose Mahal,
-                <br />
-                V.M Nagar, Tiruvallur – 602001,
-                <br />
+                33, 2nd Floor,Near By Municipality Office, <br />
+                Opposite to Rose Mahal, <br />
+                VM Nagar, Thiruvallur – 602001, <br />
                 Tamil Nadu, India
               </p>
             </div>

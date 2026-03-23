@@ -92,9 +92,9 @@ Message: ${message}`;
             <div>
               <h4 className="font-semibold text-lg">Address</h4>
               <p className="text-gray-600">
-                33, 2nd Floor,Thiruvallur Municipality Office, <br />
+                33, 2nd Floor,Near By Municipality Office, <br />
                 Opposite to Rose Mahal, <br />
-                VM Nagar, Tiruvallur – 602001, <br />
+                VM Nagar, Thiruvallur – 602001, <br />
                 Tamil Nadu, India
               </p>
             </div>

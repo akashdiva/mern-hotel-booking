@@ -25,12 +25,13 @@ const [scrolledToBottom, setScrolledToBottom] = useState(false);
 
 const [pendingReservation, setPendingReservation] = useState(null);
 const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+const [showRoomDropdown, setShowRoomDropdown] = useState(false);
 
 const [formData, setFormData] = useState({
   fullName: "",
   phone: "",
   email: "",
-  roomType: "",
+  selectedRooms: {},
   checkIn: null,
   checkOut: null,
   adults: 1,
@@ -47,8 +48,11 @@ const totalGuests = formData.adults + formData.children;
 
   useEffect(() => {
   const handleClickOutside = (event) => {
-    if (!event.target.closest(".relative")) {
+    if (!event.target.closest(".guest-dropdown-container")) {
       setShowGuestDropdown(false);
+    }
+    if (!event.target.closest(".room-dropdown-container")) {
+      setShowRoomDropdown(false);
     }
   };
 
@@ -66,10 +70,12 @@ useEffect(() => {
   const selectedRoom = rooms.find((room) => room._id === id);
 
   if (selectedRoom) {
-    setFormData((prev) => ({
-      ...prev,
-      roomType: selectedRoom._id, // store room ID instead of type
-    }));
+    setFormData((prev) => {
+      if (Object.keys(prev.selectedRooms).length === 0) {
+        return { ...prev, selectedRooms: { [selectedRoom._id]: 1 } };
+      }
+      return prev;
+    });
   }
 }, [id, rooms]);
 
@@ -80,6 +86,45 @@ useEffect(() => {
   }
 
 }, [formData.checkIn, formData.checkOut]);
+
+  const handleRoomSelectionChange = (roomId, action) => {
+    setFormData((prev) => {
+      const currentQty = prev.selectedRooms[roomId] || 0;
+      const room = rooms.find((r) => r._id === roomId);
+      if (!room) return prev;
+
+      let newQty = currentQty;
+      if (action === "inc" && currentQty < room.totalRooms) newQty++;
+      if (action === "dec" && currentQty > 0) newQty--;
+
+      const newSelectedRooms = { ...prev.selectedRooms };
+      if (newQty > 0) {
+        newSelectedRooms[roomId] = newQty;
+      } else {
+        delete newSelectedRooms[roomId];
+      }
+
+      let maxA = 0;
+      let maxC = 0;
+      Object.entries(newSelectedRooms).forEach(([rId, qty]) => {
+        const r = rooms.find((r) => r._id === rId);
+        if (r) {
+          maxA += r.maxAdults * qty;
+          maxC += r.maxChildren * qty;
+        }
+      });
+
+      const updatedAdults = prev.adults > maxA && maxA > 0 ? maxA : prev.adults;
+      const updatedChildren = prev.children > maxC && maxC > 0 ? maxC : prev.children;
+
+      return {
+        ...prev,
+        selectedRooms: newSelectedRooms,
+        adults: updatedAdults || 1,
+        children: updatedChildren
+      };
+    });
+  };
 
   const handleChange = (e) => {
   const { name, value } = e.target;
@@ -106,80 +151,69 @@ useEffect(() => {
   setFormData(updatedForm);
 };
 
-const generateBookedDates = (reservations = [], totalRooms = 1) => {
-
-  const dateCounts = {};
-
-  reservations.forEach((booking) => {
-
-    const start = new Date(booking.checkin);
-    start.setHours(0,0,0,0);
-
-    const end = new Date(booking.checkout);
-    end.setHours(0,0,0,0);
-
-    let current = new Date(start);
-
-    while (current < end) {
-
-      const key = current.toLocaleDateString("en-CA");
-
-      dateCounts[key] = (dateCounts[key] || 0) + 1;
-
-      current.setDate(current.getDate() + 1);
-    }
-
-  });
-
-  const blocked = [];
-
-  Object.keys(dateCounts).forEach((date) => {
-
-    if (dateCounts[date] >= totalRooms) {
-
-      const parts = date.split("-");
-      blocked.push(new Date(parts[0], parts[1]-1, parts[2]));
-
-    }
-
-  });
-
-  return blocked;
-};
-
 const fetchBookings = async () => {
-  if (!formData.roomType) return;
-
-  const res = await axios.get(
-    `${backendUrl}/api/reservations/room/${formData.roomType}`
-  );
-
-  const room = rooms.find(r => r._id === formData.roomType);
-
-  let reservationsList = Array.isArray(res.data?.reservations)
-    ? res.data.reservations
-    : res.data || [];
-
-  let relevantTotalRooms = room?.totalRooms || 1;
-
-  if (isAdmin && roomNumber) {
-    reservationsList = reservationsList.filter(
-      (r) => r.roomNumber && Number(r.roomNumber) === roomNumber
-    );
-    relevantTotalRooms = 1;
+  const selectedRoomIds = Object.keys(formData.selectedRooms);
+  if (selectedRoomIds.length === 0) {
+    setBookedDates([]);
+    return;
   }
 
-  const blockedDates = generateBookedDates(
-    reservationsList,
-    relevantTotalRooms
-  );
+  try {
+    const reqs = selectedRoomIds.map(rId => axios.get(`${backendUrl}/api/reservations/room/${rId}`));
+    const responses = await Promise.all(reqs);
 
-  setBookedDates(blockedDates);
+    let allBlockedDates = [];
+
+    responses.forEach((res, index) => {
+      const roomId = selectedRoomIds[index];
+      const room = rooms.find(r => r._id === roomId);
+      const reqQty = formData.selectedRooms[roomId];
+
+      let reservationsList = Array.isArray(res.data?.reservations) ? res.data.reservations : res.data || [];
+      
+      let relevantTotalRooms = room?.totalRooms || 1;
+      if (isAdmin && roomNumber && selectedRoomIds.length === 1) {
+        reservationsList = reservationsList.filter(r => r.roomNumber && Number(r.roomNumber) === roomNumber);
+        relevantTotalRooms = 1;
+      }
+      
+      const dateCounts = {};
+      reservationsList.forEach((booking) => {
+        const start = new Date(booking.checkin);
+        start.setHours(0,0,0,0);
+        const end = new Date(booking.checkout);
+        end.setHours(0,0,0,0);
+        let current = new Date(start);
+        while (current < end) {
+          const key = current.toLocaleDateString("en-CA");
+          dateCounts[key] = (dateCounts[key] || 0) + 1;
+          current.setDate(current.getDate() + 1);
+        }
+      });
+
+      const blockedForThisRoom = [];
+      Object.keys(dateCounts).forEach(date => {
+        if (dateCounts[date] + reqQty > relevantTotalRooms) {
+          const parts = date.split("-");
+          blockedForThisRoom.push(new Date(parts[0], parts[1]-1, parts[2]).toDateString());
+        }
+      });
+      allBlockedDates.push(blockedForThisRoom);
+    });
+
+    const combinedBlocked = new Set();
+    allBlockedDates.forEach(dates => dates.forEach(d => combinedBlocked.add(d)));
+    
+    setBookedDates(Array.from(combinedBlocked).map(d => new Date(d)));
+
+  } catch (error) {
+    console.error("Error fetching bookings", error);
+  }
 };
 
 useEffect(() => {
   fetchBookings();
-}, [formData.roomType, rooms]);
+}, [formData.selectedRooms, rooms]);
 
 const handleScroll = (e) => {
   const { scrollTop, scrollHeight, clientHeight } = e.target;
@@ -201,7 +235,7 @@ const handleGuestChange = (type, action) => {
     const newAdults = type === "adults" ? newValue : prev.adults;
     const newChildren = type === "children" ? newValue : prev.children;
 
-    if (!validateGuestCapacity(newAdults, newChildren, prev.roomType)) {
+    if (action === "inc" && !validateGuestCapacity(newAdults, newChildren)) {
       return prev;
     }
 
@@ -212,37 +246,46 @@ const handleGuestChange = (type, action) => {
   });
 };
 
-const validateGuestCapacity = (adults, children, roomId) => {
-  const room = rooms.find((r) => r._id === roomId);
-  if (!room) return true;
+const validateGuestCapacity = (adults, children) => {
+  let maxA = 0;
+  let maxC = 0;
+  
+  if (Object.keys(formData.selectedRooms).length === 0) return true;
 
-  if (adults > room.maxAdults || children > room.maxChildren) {
-    alert(
-      `Max capacity for ${room.type} is ${room.maxAdults} adults and ${room.maxChildren} children`
-    );
+  Object.entries(formData.selectedRooms).forEach(([rId, qty]) => {
+     const r = rooms.find(room => room._id === rId);
+     if (r) {
+       maxA += r.maxAdults * qty;
+       maxC += r.maxChildren * qty;
+     }
+  });
+
+  if (adults > maxA || children > maxC) {
+    alert(`Max capacity for your selected rooms is ${maxA} adults and ${maxC} children`);
     return false;
   }
-
   return true;
 };
 
 
 const calculateTotalAmount = () => {
-  if (!formData.checkIn || !formData.checkOut || !formData.roomType)
+  if (!formData.checkIn || !formData.checkOut || Object.keys(formData.selectedRooms).length === 0)
     return 0;
 
- const diffDays = Math.ceil(
-  (formData.checkOut.getTime() - formData.checkIn.getTime()) /
-  (1000 * 60 * 60 * 24)
-);
-
-  const selectedRoom = rooms.find(
-    (room) => room._id === formData.roomType
+  const diffDays = Math.ceil(
+    (formData.checkOut.getTime() - formData.checkIn.getTime()) /
+    (1000 * 60 * 60 * 24)
   );
 
-  if (!selectedRoom || diffDays <= 0) return 0;
+  if (diffDays <= 0) return 0;
 
-  return diffDays * selectedRoom.price;
+  let dailyTotal = 0;
+  Object.entries(formData.selectedRooms).forEach(([rId, qty]) => {
+     const r = rooms.find(room => room._id === rId);
+     if (r) dailyTotal += r.price * qty;
+  });
+
+  return diffDays * dailyTotal;
 };
 
 
@@ -337,16 +380,22 @@ if (!aadhaar) {
     return;
   }
 
-  const selectedRoom = rooms.find(
-    (room) => room._id === formData.roomType
-  );
+  const roomSelections = Object.entries(formData.selectedRooms).map(([rId, qty]) => {
+    const r = rooms.find(room => room._id === rId);
+    return {
+       roomId: rId,
+       roomName: r?.name,
+       quantity: qty,
+       price: r?.price
+    };
+  }).filter(r => r.roomName);
 
-  if (!selectedRoom) {
-    alert("Invalid room selected");
+  if (roomSelections.length === 0) {
+    alert("Please select at least one room");
     return;
   }
 
- const bookingDetails = {
+  const bookingDetails = {
   name: formData.fullName,
   email: formData.email,
   phone: formData.phone,
@@ -355,8 +404,7 @@ if (!aadhaar) {
   adults: formData.adults,
   children: formData.children,
   guests: totalGuests,
-  roomName: selectedRoom.name,
-  roomId: selectedRoom._id,
+  roomSelections: roomSelections,
    roomNumber: roomNumber || null, 
   totalAmount,
  aadhaar: aadhaar,
@@ -383,13 +431,13 @@ if (isAdmin && paymentMode === "cash") {
     form.append("checkin", pendingReservation.checkin);
     form.append("checkout", pendingReservation.checkout);
   
-   form.append("roomId", pendingReservation.roomId);
 if (pendingReservation.roomNumber) {
   form.append("roomNumber", pendingReservation.roomNumber || "");
 }
     form.append("adults", pendingReservation.adults);
     form.append("children", pendingReservation.children);
     form.append("paymentMethod", "cash");
+    form.append("roomSelections", JSON.stringify(pendingReservation.roomSelections));
 form.append("aadhaarPath", aadhaar);
 
   
@@ -513,10 +561,6 @@ handler: async function (response) {
 
   const totalAmount = calculateTotalAmount();
 
-const selectedRoom = rooms.find(
-  (room) => room._id === formData.roomType
-);
-
 const nights =
   formData.checkIn && formData.checkOut
     ? Math.ceil(
@@ -636,29 +680,46 @@ const nights =
 
               <div className="grid md:grid-cols-2 gap-6">
 
-        <div className="relative w-full">
-  <select
-    name="roomType"
-    value={formData.roomType || ""}
-    onChange={handleChange}
-    required
-    className="w-full appearance-none border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-orange-500 outline-none bg-white"
-  >
-    <option value="">Select a room type</option>
+      <div className="relative room-dropdown-container">
+        {/* Top Selector Bar */}
+        <div
+          onClick={() => setShowRoomDropdown(!showRoomDropdown)}
+          className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 flex justify-between items-center cursor-pointer hover:border-gray-400 transition"
+        >
+          <div className="flex items-center gap-3 text-gray-700">
+            <span className="text-xl">🛏️</span>
+            <span>
+              {Object.keys(formData.selectedRooms).length > 0 
+                ? `${Object.values(formData.selectedRooms).reduce((a, b) => a + b, 0)} Room(s) Selected` 
+                : "Select Rooms"}
+            </span>
+          </div>
+          <span className={`transition ${showRoomDropdown ? "rotate-180" : ""}`}>
+            ▼
+          </span>
+        </div>
 
-    {rooms.map((room) => (
-      <option key={room._id} value={room._id}>
-        {room.name} - ₹{Number(room.price).toLocaleString("en-IN")}/night
-      </option>
-    ))}
-  </select>
+        {/* Dropdown Panel */}
+        {showRoomDropdown && (
+          <div className="absolute z-50 mt-2 w-full bg-white border border-gray-300 rounded-lg p-4 shadow-lg space-y-3">
+            {rooms.map(room => (
+              <div key={room._id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg border">
+                <div>
+                  <div className="font-medium text-gray-800">{room.name}</div>
+                  <div className="text-sm text-gray-500">₹{Number(room.price).toLocaleString("en-IN")}/night</div>
+                </div>
+                <div className="flex items-center bg-white border rounded overflow-hidden">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleRoomSelectionChange(room._id, 'dec'); }} className="px-3 py-1 font-bold text-gray-600 hover:bg-gray-200">−</button>
+                  <span className="px-3 py-1 text-sm font-semibold">{formData.selectedRooms[room._id] || 0}</span>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); handleRoomSelectionChange(room._id, 'inc'); }} className="px-3 py-1 font-bold text-blue-600 hover:bg-gray-200">+</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-  {/* Custom Arrow */}
-  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-500">
-    ▼
-  </div>
-</div>
-   <div className="relative ">
+   <div className="relative guest-dropdown-container">
 
   {/* Top Selector Bar */}
   <div
@@ -796,9 +857,12 @@ const nights =
     <div className="space-y-3 text-gray-700">
 
       <div className="flex justify-between">
-        <span>Room Type:</span>
-        <span className="font-medium">
-          {selectedRoom?.name}
+        <span className="whitespace-nowrap mr-2">Selected Rooms:</span>
+        <span className="font-medium text-right inline-block">
+          {Object.entries(formData.selectedRooms).map(([rId, qty]) => {
+             const r = rooms.find(room => room._id === rId);
+             return r ? `${qty}x ${r.name}` : "";
+          }).filter(Boolean).join(", ")}
         </span>
       </div>
 
@@ -808,9 +872,14 @@ const nights =
       </div>
 
       <div className="flex justify-between">
-        <span>Price per Night:</span>
+        <span>Daily Tariff:</span>
         <span>
-          ₹{Number(selectedRoom?.price || 0).toLocaleString("en-IN")}
+          ₹{
+            Object.entries(formData.selectedRooms).reduce((acc, [rId, qty]) => {
+               const r = rooms.find(room => room._id === rId);
+               return acc + (r ? r.price * qty : 0);
+            }, 0).toLocaleString("en-IN")
+          }
         </span>
       </div>
 
@@ -955,7 +1024,7 @@ In case of unforeseen events beyond our control (natural disasters, government r
   <div className="bg-white min-h-[120px] flex flex-col justify-center items-center rounded-xl shadow text-center p-4">
     <h3 className="text-xl font-bold">Cancellation Policy</h3>
     <p className="text-gray-600">
-      Free cancellation up to 24 hours before check-in
+      Free cancellation up to 48 hours before check-in
     </p>
   </div>
 

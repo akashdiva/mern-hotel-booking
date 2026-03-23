@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 const router = express.Router();
 
@@ -52,6 +53,29 @@ router.post("/verify", upload.single("aadhaarImage"), async (req, res) => {
       message: "Server error"
     });
   }
+});
+
+router.get("/download/:filename", (req, res) => {
+  const filename = req.params.filename;
+  if (!filename) {
+    return res.status(400).send("Filename is required");
+  }
+
+  const safeFilename = path.basename(filename);
+  const filepath = path.resolve("uploads", safeFilename);
+
+  if (!fs.existsSync(filepath)) {
+    return res.status(404).send("File not found");
+  }
+
+  res.download(filepath, safeFilename, (err) => {
+    if (err) {
+      console.error("Download Error:", err);
+      if (!res.headersSent) {
+        res.status(500).send("Error downloading file");
+      }
+    }
+  });
 });
 
 export default router;

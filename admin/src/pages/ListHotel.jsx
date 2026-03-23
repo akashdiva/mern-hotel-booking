@@ -64,10 +64,10 @@ const ListHotel = ({ token }) => {
       <div className="flex flex-col gap-2">
 
         {/* Header */}
-       <div className="grid grid-cols-[1fr_2fr_3fr_1fr_1fr] items-center p-2 border-b-2 border-gray-300 text-lg font-semibold">
+       <div className="grid grid-cols-[1fr_2fr_2fr_1fr] md:grid-cols-[1fr_2fr_3fr_1fr_1fr] items-center p-2 border-b-2 border-gray-300 text-sm md:text-lg font-semibold bg-gray-50">
           <b>Image</b>
 <b>Room Name</b>
-<b>Description</b>
+<b className="hidden md:block">Description</b>
 <b>Price</b>
 <b className="text-center">Delete</b>
         </div>
@@ -81,7 +81,7 @@ const ListHotel = ({ token }) => {
           list.map((item) => (
             <div
               key={item._id}
-             className="grid grid-cols-[1fr_2fr_3fr_1fr_1fr] items-center p-2 border-b-2 border-gray-300 text-lg"
+             className="grid grid-cols-[1fr_2fr_2fr_1fr] md:grid-cols-[1fr_2fr_3fr_1fr_1fr] items-center p-2 border-b-2 border-gray-300 text-sm md:text-lg hover:bg-gray-50 transition"
             >
   <img
   src={
@@ -90,17 +90,17 @@ const ListHotel = ({ token }) => {
       : item.image
   }
   alt={item.name}
-  className="w-[50px] h-[50px] object-cover rounded"
+  className="w-[40px] h-[40px] md:w-[60px] md:h-[60px] object-cover rounded"
 />
 
-              <p>{item.name}</p>
-               <p> {item.description}</p>
+              <p className="font-medium">{item.name}</p>
+               <p className="hidden md:block text-gray-600 truncate px-2"> {item.description}</p>
 
-             <p>₹{item.price}</p>
+             <p className="font-semibold text-gray-800">₹{item.price}</p>
 
               <MdDeleteForever
                 onClick={() => handleDelete(item._id)}
-                className="ml-10 text-[28px] cursor-pointer text-red-600 hover:text-red-800 transition"
+                className="mx-auto text-[24px] md:text-[28px] cursor-pointer text-red-600 hover:text-red-800 transition"
               />
             </div>
           ))

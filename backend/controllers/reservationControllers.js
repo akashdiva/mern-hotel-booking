@@ -17,9 +17,18 @@ const createReservation = async (req, res) => {
   checkout,
   adults,
   children,
-  roomId,
   paymentMethod
 } = req.body;
+
+let roomSelections = [];
+if (req.body.roomSelections) {
+  roomSelections = typeof req.body.roomSelections === 'string' 
+    ? JSON.parse(req.body.roomSelections) 
+    : req.body.roomSelections;
+} else if (req.body.roomId) {
+  const qty = req.body.numberOfRooms ? Number(req.body.numberOfRooms) : 1;
+  roomSelections = [{ roomId: req.body.roomId, quantity: qty, price: 0 }];
+}
 
 let roomNumber = req.body.roomNumber ? Number(req.body.roomNumber) : null;
 
@@ -57,7 +66,7 @@ console.log({
   !phone ||
   !checkin ||
   !checkout ||
-  !roomId ||
+  roomSelections.length === 0 ||
   !adults ||
   children === undefined ||
   !aadhaarPath
@@ -65,84 +74,63 @@ console.log({
   return res.status(400).json({ message: "All fields are required" });
 }
 
-    const room = await hotelModel.findById(roomId);
-
-    if (!room) {
-      return res.status(400).json({ message: "Room not found" });
-    }
-
-    // 🚫 Prevent same room number double booking
-if (roomNumber) {
-
-  const existingRoomBooking = await reservationModels.findOne({
-    roomNumber,
-    checkin: { $lt: checkoutDate },
-    checkout: { $gt: checkinDate }
-  });
-
-  if (existingRoomBooking) {
-    return res.status(400).json({
-      message: `Room ${roomNumber} is already booked for the selected dates`
+  if (roomNumber) {
+    const existingRoomBooking = await reservationModels.findOne({
+      roomNumber,
+      checkin: { $lt: checkoutDate },
+      checkout: { $gt: checkinDate }
     });
+    if (existingRoomBooking) {
+      return res.status(400).json({
+        message: `Room ${roomNumber} is already booked for the selected dates`
+      });
+    }
   }
 
-}
+  // ✅ Multi-Room Capacity & Availability Validation
+  let maxA = 0;
+  let maxC = 0;
 
+  for (const selection of roomSelections) {
+    const room = await hotelModel.findById(selection.roomId);
+    if (!room) return res.status(400).json({ message: "Room not found" });
 
-   // ✅ Capacity validation
-if (adults > room.maxAdults || children > room.maxChildren) {
-  return res.status(400).json({
-    message: `Room allows only ${room.maxAdults} adults and ${room.maxChildren} children`,
-  });
-}
+    maxA += room.maxAdults * selection.quantity;
+    maxC += room.maxChildren * selection.quantity;
 
-    // Find overlapping reservations
-let reservations;
-
-if (roomNumber) {
-  // Admin booking → check specific room
-  reservations = await reservationModels.find({
-    roomNumber,
-    checkin: { $lt: checkoutDate },
-    checkout: { $gt: checkinDate },
-  });
-} else {
-  // Customer booking → check room type availability
-  reservations = await reservationModels.find({
-    roomId,
-    checkin: { $lt: checkoutDate },
-    checkout: { $gt: checkinDate },
-  });
-}
-
-let currentDate = new Date(checkinDate);
-
-while (currentDate < checkoutDate) {
-
-  let roomsBookedForDay = 0;
-
-  reservations.forEach((booking) => {
-const start = new Date(booking.checkin);
-start.setHours(0,0,0,0);
-
-const end = new Date(booking.checkout);
-end.setHours(0,0,0,0);
-
-    if (currentDate >= start && currentDate < end) {
-      roomsBookedForDay++;
+    let reservations;
+    if (roomNumber && roomSelections.length === 1 && selection.quantity === 1) {
+      reservations = await reservationModels.find({
+        roomNumber, checkin: { $lt: checkoutDate }, checkout: { $gt: checkinDate },
+      });
+    } else {
+      reservations = await reservationModels.find({
+        roomId: selection.roomId, checkin: { $lt: checkoutDate }, checkout: { $gt: checkinDate },
+      });
     }
-  });
 
-  if (roomsBookedForDay >= room.totalRooms) {
-    return res.status(400).json({
-      message: "No rooms available for selected dates",
-    });
+    let currentDate = new Date(checkinDate);
+    while (currentDate < checkoutDate) {
+      let roomsBookedForDay = 0;
+      reservations.forEach((booking) => {
+        const start = new Date(booking.checkin); start.setHours(0,0,0,0);
+        const end = new Date(booking.checkout); end.setHours(0,0,0,0);
+        if (currentDate >= start && currentDate < end) {
+          roomsBookedForDay++;
+        }
+      });
+      if (roomsBookedForDay + selection.quantity > room.totalRooms) {
+        return res.status(400).json({ message: `Not enough availability for ${room.name}` });
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
   }
 
-  currentDate.setDate(currentDate.getDate() + 1);
-}
+  if (adults > maxA || children > maxC) {
+    return res.status(400).json({ message: `Exceeded max capacity of ${maxA} adults and ${maxC} children.` });
+  }
 
-    // Check if rooms available
+  // Check if rooms available
   
 
     const nights = Math.ceil(
@@ -154,37 +142,44 @@ end.setHours(0,0,0,0);
       return res.status(400).json({ message: "Invalid booking dates" });
     }
 
-    const totalAmount = nights * room.price;
+    let paymentStatus = paymentMethod === "online" ? "paid" : "pending";
 
-    let paymentStatus = "pending";
+    const createdReservations = [];
+    const totalRoomsBooked = roomSelections.reduce((acc, s) => acc + s.quantity, 0);
 
-if(paymentMethod === "online"){
-  paymentStatus = "paid";
-}
+    for (const selection of roomSelections) {
+      const room = await hotelModel.findById(selection.roomId);
+      const amountPerRoom = selection.price ? (selection.price * nights) : (room.price * nights);
 
-if (!roomNumber) {
-  roomNumber = await assignAvailableRoomNumber(roomId, checkinDate, checkoutDate);
-}
+      for (let i = 0; i < selection.quantity; i++) {
+        let currentRoomNumber = roomNumber;
+        if (totalRoomsBooked > 1) currentRoomNumber = null;
 
-  const newReservation = await reservationModels.create({
-  name,
-  email,
-  phone,
-  checkin: checkinDate,
-  checkout: checkoutDate,
-  adults,
-  children,
-  roomName: room.name,
-  roomId,
-    roomNumber,
-  aadhaar: aadhaarPath,
-  totalAmount,
- paymentMode: paymentMethod,
-  paymentStatus
-});
-console.log("RoomNumber:", roomNumber);
+        if (!currentRoomNumber) {
+          currentRoomNumber = await assignAvailableRoomNumber(selection.roomId, checkinDate, checkoutDate);
+        }
 
-    res.status(201).json(newReservation);
+        const newRes = await reservationModels.create({
+          name,
+          email,
+          phone,
+          checkin: checkinDate,
+          checkout: checkoutDate,
+          adults: Math.ceil(adults / totalRoomsBooked),
+          children: Math.ceil(children / totalRoomsBooked),
+          roomName: room.name,
+          roomId: selection.roomId,
+          roomNumber: currentRoomNumber,
+          aadhaar: aadhaarPath,
+          totalAmount: amountPerRoom,
+          paymentMode: paymentMethod,
+          paymentStatus
+        });
+        createdReservations.push(newRes);
+      }
+    }
+
+    res.status(201).json(createdReservations.length === 1 ? createdReservations[0] : createdReservations);
 
   } catch (error) {
     console.log(error);

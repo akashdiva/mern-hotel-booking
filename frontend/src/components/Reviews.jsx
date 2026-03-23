@@ -163,7 +163,7 @@ const Reviews = () => {
 
           {/* See All Reviews */}
           <a
-            href="https://www.google.com/maps/place/?q=place_id:ChIJ2eSzSyKQUjoR2etgZ6dtHRs"
+            href="https://www.google.com/maps/search/?api=1&query=Raghu+Residency&query_place_id=ChIJ2eSzSyKQUjoR2etgZ6dtHRs"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#E17100] hover:bg-[#c96300] text-white px-6 py-3 rounded-lg font-medium transition shadow-md"

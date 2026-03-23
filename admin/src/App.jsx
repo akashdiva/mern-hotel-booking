@@ -8,8 +8,8 @@ import Reservation from "./pages/Reservation";
 import RoomDashboard from "./pages/RoomDashboard";
 
 
-//export const backendUrl = "https://api.raghuresidency.in";
-export const backendUrl="http://localhost:4000";
+export const backendUrl = "https://api.raghuresidency.in";
+//export const backendUrl="http://localhost:4000";
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -30,7 +30,7 @@ const App = () => {
         <div className="flex w-full">
           <Sidebar setToken={setToken} />
 
-          <div className="w-[70%] ml-[max(5vw,25px)] my-8 text-black text-base">
+          <div className="flex-1 mx-4 sm:mx-[max(5vw,25px)] my-8 text-black text-base overflow-hidden">
             <Routes>
               <Route path="/add" element={<AddHotel token={token} />} />
               <Route path="/list" element={<ListHotel token={token} />} />

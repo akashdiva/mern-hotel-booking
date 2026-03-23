@@ -22,6 +22,33 @@ const Reservation = () => {
     fetchReservations();
   }, []);
 
+  // 🔹 Download Aadhaar Image (Bypassing CORS by using a backend endpoint)
+  const handleDownload = (imageUrl) => {
+    try {
+      // Extract filename from the URL, e.g., "1773896274698.jpeg"
+      const filename = imageUrl.split("/").pop();
+      if (!filename) {
+        throw new Error("Invalid image URL");
+      }
+
+      // Hit our new backend endpoint that forces a download
+      const downloadUrl = `${backendUrl}/api/aadhaar/download/${filename}`;
+
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.target = "_blank"; // Opens in new tab so if not deployed, it doesn't break current page
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Fallback: open in new tab
+      window.open(imageUrl, "_blank");
+    }
+  };
+
   // 🔹 Delete reservation
  const handleDelete = async (id) => {
   try {
@@ -47,10 +74,10 @@ const Reservation = () => {
         Room Reservation
       </h2>
 
-      <div className="overflow-x-auto">
-        <table className="w-full shadow-lg rounded-xl">
+      <div className="overflow-x-auto w-full">
+        <table className="w-full min-w-[800px] shadow-lg rounded-xl text-sm md:text-base">
           <thead>
-            <tr className="bg-fuchsia-600 text-left text-white">
+            <tr className="bg-fuchsia-600 text-left text-white whitespace-nowrap">
               <th className="p-3">Room Name</th>
               <th className="p-3">Name</th>
               <th className="p-3">Email</th>
@@ -138,8 +165,14 @@ const Reservation = () => {
             <img 
               src={selectedImage} 
               alt="Aadhaar Full Size" 
-              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl bg-white" 
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white" 
             />
+            <button
+              onClick={() => handleDownload(selectedImage)}
+              className="mt-4 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold py-2 px-6 rounded shadow transition-colors"
+            >
+              Download
+            </button>
           </div>
         </div>
       )}
